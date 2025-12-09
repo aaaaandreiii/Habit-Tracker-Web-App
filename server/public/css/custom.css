@@ -1,0 +1,283 @@
+/* ------------------------ */
+/* Form elements – global   */
+/* ------------------------ */
+
+input[type="text"],
+input:not([type]),
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+textarea,
+select {
+  font-size: 0.875rem;           /* text-sm */
+  padding: 0.25rem 0.5rem;       /* px-2 py-1 */
+  border-radius: 0.375rem;       /* rounded-md */
+  border: 1px solid #cbd5e1;     /* slate-300 */
+  background-color: #ffffff;     /* white in light mode */
+  color: #0f172a;                /* slate-900 */
+}
+
+/* Focus states */
+input[type="text"]:focus,
+input:not([type]):focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="search"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #10b981;         /* emerald-500 */
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4);
+}
+
+/* Placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;                /* slate-400 */
+}
+
+/* ------------------------ */
+/* Dark mode variants       */
+/* ------------------------ */
+
+.dark input[type="text"],
+.dark input:not([type]),
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark input[type="search"],
+.dark textarea,
+.dark select {
+  background-color: #020617;     /* slate-950 */
+  border-color: #1f2937;         /* slate-800-ish */
+  color: #e2e8f0;                /* slate-200 */
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;                /* slate-500 */
+}
+
+/* Stronger light vs dark contrast */
+
+html:not(.dark) body {
+  background-color: #f9fafb; /* very light */
+  color: #0f172a;
+}
+
+html.dark body {
+  background-color: #020617; /* near-black */
+  color: #e2e8f0;
+}
+
+/* Navbar gradient per theme */
+html:not(.dark) .app-navbar {
+  background: linear-gradient(to right, #ecfeff, #f0fdf4);
+}
+
+html.dark .app-navbar {
+  background: linear-gradient(to right, #020617, #0f172a);
+}
+
+/* Theme toggle button */
+html:not(.dark) #theme-toggle {
+  background-color: #e5e7eb; /* slate-200 */
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+html.dark #theme-toggle {
+  background-color: #1f2937; /* slate-800 */
+  color: #e5e7eb;
+  border-color: #334155;
+}
+
+
+/* Watery goal progress bar */
+.goal-progress {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  background-color: rgba(148, 163, 184, 0.25); /* slate-400-ish */
+  height: 0.75rem;
+}
+
+.goal-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  max-width: 100%;
+  background: linear-gradient(90deg, #22c55e, #06b6d4, #0ea5e9);
+  background-size: 200% 100%;
+  animation: goalWave 3s ease-in-out infinite;
+  transition: width 0.6s ease-out;
+}
+
+@keyframes goalWave {
+  0% {
+    background-position: 0% 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0% 0;
+  }
+}
+
+/* Goal "watery" progress bar */
+.goal-progress {
+  position: relative;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: linear-gradient(to right, #e2e8f0, #cbd5f5);
+}
+
+.goal-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #22c55e, #0ea5e9);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.45);
+  transition: width 0.4s ease;
+}
+
+/* Water intake "bottle" bar */
+.water-progress {
+  position: relative;
+  width: 100%;
+  height: 0.6rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: linear-gradient(to right, #e0f2fe, #f1f5f9);
+}
+
+.water-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+  transition: width 0.3s ease;
+}
+
+/* Habit matrix table responsiveness */
+.habit-matrix-table {
+  min-width: 640px;
+}
+
+@media (max-width: 768px) {
+  .habit-matrix-table {
+    font-size: 0.75rem;
+    min-width: 480px;
+  }
+}
+
+/* Habit edit mode: show Edit/Delete actions only when toggled */
+.habit-actions {
+  display: none;
+}
+
+body.habit-edit-mode .habit-actions {
+  display: inline-flex;
+}
+
+
+/* Only show Edit/Delete when Edit Habits mode is active */
+.habit-actions {
+  display: none;
+}
+
+body.habit-edit-mode .habit-actions {
+  display: inline-flex;
+}
+
+/* ---- Theme-aware base colors ---- */
+
+:root {
+  --app-text-main: #0f172a;       /* slate-900 */
+  --app-text-muted: #6b7280;      /* slate-500 */
+  --app-surface-bg: #ffffff;
+  --app-border-subtle: #e5e7eb;
+}
+
+html.dark {
+  --app-text-main: #e5e7eb;       /* slate-200 */
+  --app-text-muted: #9ca3af;      /* slate-400 */
+  --app-surface-bg: #020617;      /* slate-950 */
+  --app-border-subtle: #1e293b;
+}
+
+/* Base text color – everything inherits from here */
+body {
+  color: var(--app-text-main);
+}
+
+/* Utility class if you want muted text without Tailwind */
+.text-muted {
+  color: var(--app-text-muted);
+}
+
+/* Generic card surface helper (optional) */
+.surface {
+  background-color: var(--app-surface-bg);
+  border: 1px solid var(--app-border-subtle);
+}
+
+/* ---- Goal “water” progress bar ---- */
+
+.goal-progress {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.2); /* slate-400/20 */
+}
+
+.goal-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #0ea5e9); /* emerald → cyan */
+  transition: width 0.3s ease;
+}
+
+/* ---- Habit edit mode (show/hide edit/delete buttons) ---- */
+
+.habit-actions {
+  display: none;
+}
+
+body.habit-edit-mode .habit-actions {
+  display: inline-flex;
+}
+
+/* Optional visual hint when editing */
+body.habit-edit-mode .habit-card-wrapper {
+  outline: 1px dashed rgba(148, 163, 184, 0.6);
+}
+
+/* Drag styles */
+.habit-card-wrapper {
+  cursor: default;
+}
+
+body.habit-edit-mode .habit-card-wrapper {
+  cursor: grab;
+}
+
+.habit-card-wrapper.dragging {
+  opacity: 0.7;
+}
+
+.habit-card-wrapper.drag-over {
+  outline: 2px solid #22c55e;
+}
+
+/* Bottom nav (if you already have it) can live here too if needed */

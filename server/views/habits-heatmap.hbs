@@ -1,0 +1,44 @@
+<section class="space-y-4">
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">Habit Heatmap</h1>
+      <p class="text-xs text-slate-500">
+        Last 30 days of completed habits. Darker squares mean more completions that day.
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a href="/habits/today" class="px-3 py-1 rounded-md border text-xs">
+        ← Back to Today
+      </a>
+      <a href="/habits/matrix" class="px-3 py-1 rounded-md border text-xs">
+        Spreadsheet view
+      </a>
+    </div>
+  </header>
+
+  <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+    <div class="grid grid-cols-7 gap-2">
+      {{#each heatmapDays}}
+        <div class="flex flex-col items-center gap-1">
+          <div
+            class="h-8 w-8 rounded flex items-center justify-center text-[11px] {{heatmapClass completions}}"
+            title="{{completions}} habit(s) completed on {{label}}">
+            <span>{{day}}</span>
+          </div>
+          <span class="hidden sm:block text-[9px] text-slate-500">{{label}}</span>
+        </div>
+      {{/each}}
+    </div>
+
+    <div class="mt-4 flex items-center gap-2 text-[11px] text-slate-500">
+      <span class="inline-flex h-4 w-4 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"></span>
+      <span>0</span>
+      <span class="inline-flex h-4 w-4 rounded bg-emerald-100"></span>
+      <span>1</span>
+      <span class="inline-flex h-4 w-4 rounded bg-emerald-300"></span>
+      <span>2–3</span>
+      <span class="inline-flex h-4 w-4 rounded bg-emerald-500"></span>
+      <span>4+</span>
+    </div>
+  </div>
+</section>

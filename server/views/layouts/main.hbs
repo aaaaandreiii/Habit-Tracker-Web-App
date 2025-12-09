@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <title>{{#if title}}{{title}} · {{/if}}Habit & Nutrition Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Tailwind CDN (for demo) -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/custom.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-900">
+  <div class="min-h-screen flex flex-col">
+    {{> navbar}}
+
+      <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-4">
+        {{{body}}}
+      </main>
+
+      {{!-- Mobile bottom nav (icons) --}}
+      {{#if user}}
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-950/90 backdrop-blur z-20">
+          <div class="max-w-6xl mx-auto flex justify-around items-center py-2 text-[11px]">
+            <a href="/dashboard" class="flex flex-col items-center gap-0.5">
+              <span>🏠</span>
+              <span>Home</span>
+            </a>
+            <a href="/habits/today" class="flex flex-col items-center gap-0.5">
+              <span>✅</span>
+              <span>Habits</span>
+            </a>
+            <a href="/nutrition/daily" class="flex flex-col items-center gap-0.5">
+              <span>🍽️</span>
+              <span>Food</span>
+            </a>
+            <a href="/journal" class="flex flex-col items-center gap-0.5">
+              <span>📓</span>
+              <span>Journal</span>
+            </a>
+            <a href="/profile/settings" class="flex flex-col items-center gap-0.5">
+              <span>👤</span>
+              <span>Profile</span>
+            </a>
+          </div>
+        </nav>
+        {{!-- spacer so bottom nav doesn't hide content --}}
+        <div class="h-12 md:hidden"></div>
+      {{/if}}
+
+    <footer class="border-t border-slate-200 dark:border-slate-700 text-xs text-center py-4 text-slate-500 dark:text-slate-400">
+      Habit & Nutrition Tracker · Demo
+    </footer>
+  </div>
+
+  <script src="/js/theme.js"></script>
+</body>
+</html>

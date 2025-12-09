@@ -1,0 +1,172 @@
+<section class="space-y-4">
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div>
+      <h1 class="text-lg font-semibold">Habit Matrix</h1>
+      <p class="text-xs text-slate-500">
+        Spreadsheet-style overview of your habits across three weeks.
+      </p>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <a href="/habits/heatmap" class="px-3 py-1 rounded-md border">
+        ← Calendar view
+      </a>
+      <div class="flex items-center gap-1">
+        <a href="/habits/matrix?offset={{prevOffset}}" class="px-2 py-1 rounded-md border text-[11px]">
+          ⟵ Earlier
+        </a>
+        <a href="/habits/matrix?offset=0" class="px-2 py-1 rounded-md border text-[11px]">
+          This week
+        </a>
+        <a href="/habits/matrix?offset={{nextOffset}}" class="px-2 py-1 rounded-md border text-[11px]">
+          Later ⟶
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <!-- Main table + daily summary -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+        <h2 class="text-sm font-semibold mb-2">Habits by Week</h2>
+        {{#if rows.length}}
+          <div class="overflow-x-auto">
+            <table class="habit-matrix-table w-full text-[11px] border-collapse">
+              <thead>
+                <tr>
+                  <th class="sticky left-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-700 align-bottom px-2 py-1 text-left">
+                    Habit
+                  </th>
+                  {{#each weeks}}
+                    <th
+                      class="text-center px-2 py-1 border-b border-slate-200 dark:border-slate-700"
+                      colspan="{{this.days.length}}">
+                      {{this.label}}
+                    </th>
+                  {{/each}}
+                </tr>
+                <tr>
+                  <th class="sticky left-0 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-700 text-[10px] px-2 py-1">
+                    &nbsp;
+                  </th>
+                  {{#each weeks}}
+                    {{#each this.days}}
+                      <th class="text-center border-b border-slate-200 dark:border-slate-700 px-1 py-1">
+                        <div class="flex flex-col items-center gap-0.5">
+                          <span>{{weekday}}</span>
+                          <span class="text-[10px] text-slate-500">{{label}}</span>
+                        </div>
+                      </th>
+                    {{/each}}
+                  {{/each}}
+                </tr>
+              </thead>
+              <tbody>
+                {{#each rows}}
+                  <tr>
+                    <td class="sticky left-0 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 px-2 py-1 font-medium">
+                      {{this.habit.name}}
+                    </td>
+                    {{#each this.cells}}
+                      <td class="text-center border-b border-slate-100 dark:border-slate-800 px-1 py-1">
+                        {{#if isCompleted}}
+                          <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px]">
+                            ✓
+                          </span>
+                        {{else}}
+                          {{#if value}}
+                            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-[10px]">
+                              {{value}}
+                            </span>
+                          {{else}}
+                            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px]">
+                              •
+                            </span>
+                          {{/if}}
+                        {{/if}}
+                      </td>
+                    {{/each}}
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <p class="text-[11px] text-slate-500">
+            No habits found. Create habits first to see them here.
+          </p>
+        {{/if}}
+      </div>
+
+      <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+        <h2 class="text-sm font-semibold mb-2">Daily Completion Summary</h2>
+        {{#if dailySummaries.length}}
+          <div class="overflow-x-auto mb-3">
+            <table class="w-full text-[11px] border-collapse min-w-[480px]">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700">
+                  <th class="text-left px-2 py-1">Day</th>
+                  <th class="text-right px-2 py-1">Done</th>
+                  <th class="text-right px-2 py-1">Not done</th>
+                  <th class="text-right px-2 py-1">% complete</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each dailySummaries}}
+                  <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                    <td class="px-2 py-1">{{label}}</td>
+                    <td class="px-2 py-1 text-right">{{completed}}</td>
+                    <td class="px-2 py-1 text-right">{{notDone}}</td>
+                    <td class="px-2 py-1 text-right">{{percent}}%</td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+          <div class="h-40">
+            <canvas id="habitMatrixChart" class="w-full h-full"></canvas>
+          </div>
+        {{else}}
+          <p class="text-[11px] text-slate-500">
+            No data for this window yet.
+          </p>
+        {{/if}}
+      </div>
+    </div>
+
+    <!-- Per-habit analysis -->
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+      <h2 class="text-sm font-semibold mb-2">Per-Habit Analysis</h2>
+      {{#if habitSummaries.length}}
+        <div class="space-y-2 max-h-[28rem] overflow-auto">
+          {{#each habitSummaries}}
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-2 last:border-b-0">
+              <p class="font-medium mb-1">{{habitName}}</p>
+              <p class="text-[11px] text-slate-500 mb-1">
+                Expected: {{expected}} · Completed: {{completed}}
+              </p>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div
+                  class="bg-emerald-500 h-1.5"
+                  style="width: {{progressPercent}}%;">
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">
+                {{progressPercent}}% of expected completions
+              </p>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="text-[11px] text-slate-500">
+          No data yet. As you log more, per-habit insights will show here.
+        </p>
+      {{/if}}
+    </div>
+  </div>
+</section>
+
+<script>
+  window.__HABIT_MATRIX_DAILY__ = {{{json dailySummaries}}};
+</script>
+<script src="/js/habits-matrix.js"></script>

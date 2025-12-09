@@ -1,0 +1,34 @@
+<header class="app-navbar border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur">
+  <nav class="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
+    <a href="/dashboard" class="flex items-center gap-2 text-sm font-semibold">
+      <span class="inline-flex h-7 w-7 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500"></span>
+      <span>Habit & Nutrition</span>
+    </a>
+
+    {{#if user}}
+    <div class="flex items-center gap-4 text-xs sm:text-sm">
+      <a href="/dashboard" class="hover:text-emerald-500">Dashboard</a>
+      <a href="/habits/today" class="hover:text-emerald-500">Habits</a>
+      <a href="/nutrition/daily" class="hover:text-emerald-500">Nutrition</a>
+      <a href="/journal" class="hover:text-emerald-500">Journal</a>
+      <a href="/profile/settings" class="hover:text-emerald-500">Profile</a>
+
+      <button id="theme-toggle" class="px-2 py-1 rounded-md border text-[11px] sm:text-xs border-slate-200 dark:border-slate-700">
+        🌓 Theme
+      </button>
+
+      <form action="/auth/logout" method="post">
+        <button
+          class="px-3 py-1 rounded-md bg-rose-500 text-white text-[11px] sm:text-xs hover:bg-rose-600">
+          Logout
+        </button>
+      </form>
+    </div>
+    {{else}}
+    <div class="flex items-center gap-2">
+      <a href="/auth/login" class="text-xs sm:text-sm hover:text-emerald-500">Login</a>
+      <a href="/auth/register" class="text-xs sm:text-sm hover:text-emerald-500">Sign up</a>
+    </div>
+    {{/if}}
+  </nav>
+</header>

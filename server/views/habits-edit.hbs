@@ -1,0 +1,184 @@
+<section class="space-y-4">
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">
+        {{#if habit}}Edit Habit{{else}}New Habit{{/if}}
+      </h1>
+      <p class="text-xs text-slate-500">
+        Configure your daily / weekly habits and targets.
+      </p>
+    </div>
+    <a href="/habits/today" class="px-3 py-1 rounded-md border text-xs">
+      ← Back to Today
+    </a>
+  </header>
+
+  <form
+    method="post"
+    action="{{#if habit}}/habits/{{habit.id}}/edit{{else}}/habits/new{{/if}}"
+    class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs grid gap-4 md:grid-cols-2"
+  >
+    <div class="space-y-2">
+      <div>
+        <label class="block mb-1">Name</label>
+        <input
+          name="name"
+          required
+          class="w-full px-2 py-1 rounded border"
+          value="{{#if habit}}{{habit.name}}{{/if}}"
+        >
+      </div>
+
+      <div>
+        <label class="block mb-1">Description</label>
+        <textarea
+          name="description"
+          rows="2"
+          class="w-full px-2 py-1 rounded border"
+        >{{#if habit}}{{habit.description}}{{/if}}</textarea>
+      </div>
+
+      <div>
+        <label class="block mb-1">Category</label>
+        <input
+          name="category"
+          class="w-full px-2 py-1 rounded border"
+          value="{{#if habit}}{{habit.category}}{{/if}}"
+        >
+      </div>
+
+      <div>
+        <label class="block mb-1">Icon (emoji)</label>
+        <input
+          name="icon"
+          class="w-full px-2 py-1 rounded border"
+          placeholder="e.g. 💧"
+          value="{{#if habit}}{{habit.icon}}{{/if}}"
+        >
+      </div>
+
+      <div>
+        <label class="block mb-1">Color</label>
+        <input
+          name="color"
+          type="color"
+          class="w-20 h-8 p-0 border rounded"
+          value="{{#if habit}}{{habit.color}}{{else}}#22c55e{{/if}}"
+        >
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <div>
+        <label class="block mb-1">Habit Type</label>
+        <select name="habitType" class="w-full px-2 py-1 rounded border">
+          <option value="BOOLEAN" {{#if (eq habit.habitType "BOOLEAN")}}selected{{/if}}>Boolean (Done / Not)</option>
+          <option value="QUANTITY" {{#if (eq habit.habitType "QUANTITY")}}selected{{/if}}>Quantity (e.g. glasses, reps)</option>
+          <option value="DURATION" {{#if (eq habit.habitType "DURATION")}}selected{{/if}}>Duration (minutes)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block mb-1">Time of day</label>
+        <select name="timeOfDay" class="w-full px-2 py-1 rounded border">
+          <option value="ANY" {{#if (eq habit.timeOfDay "ANY")}}selected{{/if}}>Any / Not set</option>
+          <option value="DAY" {{#if (eq habit.timeOfDay "DAY")}}selected{{/if}}>Day habit</option>
+          <option value="NIGHT" {{#if (eq habit.timeOfDay "NIGHT")}}selected{{/if}}>Night habit</option>
+        </select>
+        <p class="text-[11px] text-slate-500 mt-1">
+          Used for filtering morning vs evening routines.
+        </p>
+      </div>
+
+      <div>
+        <label class="block mb-1">Frequency</label>
+        <select name="frequencyType" class="w-full px-2 py-1 rounded border">
+          <option value="DAILY" {{#if (eq habit.frequencyType "DAILY")}}selected{{/if}}>Daily</option>
+          <option value="WEEKLY" {{#if (eq habit.frequencyType "WEEKLY")}}selected{{/if}}>Weekly</option>
+          <option value="MONTHLY" {{#if (eq habit.frequencyType "MONTHLY")}}selected{{/if}}>Monthly</option>
+          <option value="CUSTOM" {{#if (eq habit.frequencyType "CUSTOM")}}selected{{/if}}>Custom</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block mb-1">Target Value</label>
+        <input
+          name="targetValue"
+          type="number"
+          step="0.1"
+          class="w-full px-2 py-1 rounded border"
+          value="{{#if habit}}{{habit.targetValue}}{{/if}}"
+        >
+        <p class="text-[11px] text-slate-500 mt-1">
+          For Boolean habits you can leave this blank.
+        </p>
+      </div>
+
+      <div>
+        <label class="block mb-1">Start Date</label>
+        <input
+          name="startDate"
+          type="date"
+          class="w-full px-2 py-1 rounded border"
+          value="{{#if habit}}{{dateInput habit.startDate}}{{/if}}"
+        >
+      </div>
+
+      <div>
+        <label class="block mb-1">End Date</label>
+        <div class="flex gap-2 items-center">
+          <input
+            name="endDate"
+            type="date"
+            class="w-full px-2 py-1 rounded border"
+            value="{{#if habit}}{{dateInput habit.endDate}}{{/if}}"
+            {{#if habit}}
+              {{#unless habit.endDate}}disabled{{/unless}}
+            {{else}}
+              disabled
+            {{/if}}
+          >
+          <label class="flex items-center gap-1 text-[11px]">
+            <input
+              type="checkbox"
+              name="noEndDate"
+              {{#if habit}}
+                {{#unless habit.endDate}}checked{{/unless}}
+              {{else}}
+                checked
+              {{/if}}
+              onchange="this.closest('div').querySelector('input[name=endDate]').disabled = this.checked;"
+            >
+            Ongoing
+          </label>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-1">
+          Check “Ongoing” to keep this habit forever. Uncheck to set a specific end date.
+        </p>
+      </div>
+
+
+      {{#if habit}}
+        <div class="mt-2">
+          <label class="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              name="isArchived"
+              {{#if habit.isArchived}}checked{{/if}}
+            >
+            Archive habit (hide from Today view)
+          </label>
+        </div>
+      {{/if}}
+    </div>
+
+    <div class="md:col-span-2 flex items-center justify-end mt-2 gap-2">
+      <a href="/habits/today" class="px-3 py-1 rounded-md border text-xs">
+        Cancel
+      </a>
+      <button class="px-4 py-2 rounded bg-emerald-500 text-white text-xs">
+        {{#if habit}}Save Changes{{else}}Create Habit{{/if}}
+      </button>
+    </div>
+  </form>
+</section>

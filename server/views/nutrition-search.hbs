@@ -1,0 +1,338 @@
+<section class="space-y-4">
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">Search Foods</h1>
+      <p class="text-xs text-slate-500">
+        Search your food database, log meals quickly, or create custom foods.
+      </p>
+    </div>
+    <a href="/nutrition/daily" class="px-3 py-1 rounded-md border text-xs">
+      ← Back to Daily
+    </a>
+  </header>
+
+  <!-- Search bar -->
+  <form
+    method="get"
+    action="/nutrition/foods/search"
+    class="flex gap-2 text-xs bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3"
+  >
+    <input
+      type="text"
+      name="q"
+      placeholder="Search food or brand..."
+      value="{{q}}"
+      class="flex-1 px-2 py-1 rounded border"
+    >
+    <button class="px-3 py-1 rounded bg-emerald-500 text-white">
+      Search
+    </button>
+  </form>
+
+  <!-- Add Custom Food -->
+  <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3 text-xs">
+    <h2 class="text-sm font-semibold mb-2">Add Custom Food</h2>
+    <form method="post" action="/nutrition/foods/custom" class="grid gap-2 md:grid-cols-4">
+      <div class="md:col-span-2">
+        <label class="block mb-1">Name</label>
+        <input
+          name="name"
+          required
+          class="w-full px-2 py-1 rounded border"
+          placeholder="e.g. Homemade smoothie"
+        >
+      </div>
+      <div>
+        <label class="block mb-1">Serving size description</label>
+        <input
+          name="servingSizeDesc"
+          class="w-full px-2 py-1 rounded border"
+          placeholder="e.g. 1 slice, 1 cup"
+        >
+      </div>
+      <div>
+        <label class="block mb-1">Base amount &amp; unit</label>
+        <div class="flex gap-1">
+          <input
+            name="baseServingSizeAmount"
+            type="number"
+            step="1"
+            value="100"
+            class="w-20 px-2 py-1 rounded border"
+          >
+          <select name="baseServingSizeUnit" class="flex-1 px-2 py-1 rounded border">
+            <option value="G">g</option>
+            <option value="OZ">oz</option>
+            <option value="ML">ml</option>
+            <option value="CUP">cup</option>
+            <option value="PIECE">pc</option>
+            <option value="SLICE">slice</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block mb-1">Calories</label>
+        <input
+          name="calories"
+          type="number"
+          step="1"
+          required
+          class="w-full px-2 py-1 rounded border"
+        >
+      </div>
+      <div>
+        <label class="block mb-1">Protein (g)</label>
+        <input name="protein" type="number" step="0.1" class="w-full px-2 py-1 rounded border">
+      </div>
+      <div>
+        <label class="block mb-1">Carbs (g)</label>
+        <input name="carbs" type="number" step="0.1" class="w-full px-2 py-1 rounded border">
+      </div>
+      <div>
+        <label class="block mb-1">Fat (g)</label>
+        <input name="fat" type="number" step="0.1" class="w-full px-2 py-1 rounded border">
+      </div>
+
+      <div class="md:col-span-4 flex flex-wrap gap-2 mt-1">
+        <div class="flex-1 grid grid-cols-3 gap-2">
+          <div>
+            <label class="block mb-1">Fiber (g)</label>
+            <input name="fiber" type="number" step="0.1" class="w-full px-2 py-1 rounded border">
+          </div>
+          <div>
+            <label class="block mb-1">Sugar (g)</label>
+            <input name="sugar" type="number" step="0.1" class="w-full px-2 py-1 rounded border">
+          </div>
+          <div>
+            <label class="block mb-1">Sodium (mg)</label>
+            <input name="sodium" type="number" step="1" class="w-full px-2 py-1 rounded border">
+          </div>
+        </div>
+        <div class="flex items-end">
+          <button class="px-3 py-1 rounded bg-emerald-500 text-white text-[11px]">
+            Save Custom Food
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Generic & Branded results -->
+  <div class="grid gap-4 md:grid-cols-2 text-xs">
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
+      <h2 class="text-sm font-semibold mb-2">Generic Foods</h2>
+      {{#if generic.length}}
+        <div class="space-y-2 max-h-80 overflow-auto">
+          {{#each generic}}
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 last:border-b-0">
+              <div>
+                <p class="font-medium">{{this.name}}</p>
+                <p class="text-[11px] text-slate-500">
+                  {{#if this.category}}{{this.category}} · {{/if}}
+                  {{this.calories}} kcal / {{this.baseServingSizeG}} g
+                </p>
+              </div>
+              <form method="post" action="/nutrition/log" class="flex items-center gap-1">
+                <input type="hidden" name="foodItemId" value="{{this.id}}">
+                <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="BREAKFAST">Bkfst</option>
+                  <option value="LUNCH">Lunch</option>
+                  <option value="DINNER">Dinner</option>
+                  <option value="SNACK">Snack</option>
+                </select>
+                <input
+                  name="quantity"
+                  type="number"
+                  step="1"
+                  value="{{this.baseServingSizeG}}"
+                  class="w-16 px-1 py-0.5 rounded border text-[11px]"
+                >
+                <select name="unit" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="G">g</option>
+                  <option value="OZ">oz</option>
+                  <option value="ML">ml</option>
+                  <option value="CUP">cup</option>
+                  <option value="PIECE">pc</option>
+                  <option value="SLICE">slice</option>
+                </select>
+                <button class="px-2 py-0.5 rounded bg-emerald-500 text-white text-[11px]">
+                  Add
+                </button>
+              </form>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="text-[11px] text-slate-500">No generic foods found.</p>
+      {{/if}}
+    </div>
+
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
+      <h2 class="text-sm font-semibold mb-2">Branded Foods</h2>
+      {{#if branded.length}}
+        <div class="space-y-2 max-h-80 overflow-auto">
+          {{#each branded}}
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 last:border-b-0">
+              <div>
+                <p class="font-medium">{{this.brandName}} {{this.productName}}</p>
+                <p class="text-[11px] text-slate-500">
+                  {{this.calories}} kcal / {{this.servingSizeG}} g · {{this.barcode}}
+                </p>
+              </div>
+              <form method="post" action="/nutrition/log" class="flex items-center gap-1">
+                <input type="hidden" name="brandedFoodItemId" value="{{this.id}}">
+                <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="BREAKFAST">Bkfst</option>
+                  <option value="LUNCH">Lunch</option>
+                  <option value="DINNER">Dinner</option>
+                  <option value="SNACK">Snack</option>
+                </select>
+                <input
+                  name="quantity"
+                  type="number"
+                  step="1"
+                  value="{{this.servingSizeG}}"
+                  class="w-16 px-1 py-0.5 rounded border text-[11px]"
+                >
+                <select name="unit" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="G">g</option>
+                  <option value="OZ">oz</option>
+                  <option value="ML">ml</option>
+                  <option value="CUP">cup</option>
+                  <option value="PIECE">pc</option>
+                  <option value="SLICE">slice</option>
+                </select>
+                <button class="px-2 py-0.5 rounded bg-emerald-500 text-white text-[11px]">
+                  Add
+                </button>
+              </form>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="text-[11px] text-slate-500">No branded foods found.</p>
+      {{/if}}
+    </div>
+  </div>
+
+  <!-- Custom foods & Recent quick-add -->
+  <div class="grid gap-4 md:grid-cols-2 text-xs">
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
+      <h2 class="text-sm font-semibold mb-2">Your Custom Foods</h2>
+      {{#if customFoods.length}}
+        <div class="space-y-2 max-h-80 overflow-auto">
+          {{#each customFoods}}
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 last:border-b-0">
+              <div>
+                <p class="font-medium">{{this.name}}</p>
+                <p class="text-[11px] text-slate-500">
+                  {{this.calories}} kcal /
+                  {{this.baseServingSizeAmount}} {{this.baseServingSizeUnit}}
+                  {{#if this.servingSizeDesc}}· {{this.servingSizeDesc}}{{/if}}
+                </p>
+              </div>
+              <form method="post" action="/nutrition/log" class="flex items-center gap-1">
+                <input type="hidden" name="customFoodId" value="{{this.id}}">
+                <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="BREAKFAST">Bkfst</option>
+                  <option value="LUNCH">Lunch</option>
+                  <option value="DINNER">Dinner</option>
+                  <option value="SNACK">Snack</option>
+                </select>
+                <input
+                  name="quantity"
+                  type="number"
+                  step="1"
+                  value="{{this.baseServingSizeAmount}}"
+                  class="w-16 px-1 py-0.5 rounded border text-[11px]"
+                >
+                <select name="unit" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="G">g</option>
+                  <option value="OZ">oz</option>
+                  <option value="ML">ml</option>
+                  <option value="CUP">cup</option>
+                  <option value="PIECE">pc</option>
+                  <option value="SLICE">slice</option>
+                </select>
+                <button class="px-2 py-0.5 rounded bg-emerald-500 text-white text-[11px]">
+                  Add
+                </button>
+              </form>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="text-[11px] text-slate-500">
+          You don't have any custom foods yet. Create one above.
+        </p>
+      {{/if}}
+    </div>
+
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
+      <h2 class="text-sm font-semibold mb-2">Quick Add (Recent Foods)</h2>
+      {{#if recentEntries.length}}
+        <div class="space-y-2 max-h-80 overflow-auto">
+          {{#each recentEntries}}
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 last:border-b-0">
+              <div>
+                <p class="font-medium">
+                  {{this.mealType}} ·
+                  {{#if this.foodItem}}{{this.foodItem.name}}{{/if}}
+                  {{#if this.brandedFoodItem}}{{this.brandedFoodItem.brandName}} {{this.brandedFoodItem.productName}}{{/if}}
+                  {{#if this.customFood}}{{this.customFood.name}}{{/if}}
+                  {{#if this.recipe}}{{this.recipe.name}}{{/if}}
+                </p>
+                <p class="text-[11px] text-slate-500">
+                  Last: {{this.quantity}} {{this.unit}} · {{this.calories}} kcal
+                </p>
+              </div>
+              <form method="post" action="/nutrition/log" class="flex items-center gap-1">
+                {{#if this.foodItemId}}
+                  <input type="hidden" name="foodItemId" value="{{this.foodItemId}}">
+                {{/if}}
+                {{#if this.brandedFoodItemId}}
+                  <input type="hidden" name="brandedFoodItemId" value="{{this.brandedFoodItemId}}">
+                {{/if}}
+                {{#if this.customFoodId}}
+                  <input type="hidden" name="customFoodId" value="{{this.customFoodId}}">
+                {{/if}}
+                {{#if this.recipeId}}
+                  <input type="hidden" name="recipeId" value="{{this.recipeId}}">
+                {{/if}}
+                <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="BREAKFAST">Bkfst</option>
+                  <option value="LUNCH">Lunch</option>
+                  <option value="DINNER">Dinner</option>
+                  <option value="SNACK">Snack</option>
+                </select>
+                <input
+                  name="quantity"
+                  type="number"
+                  step="1"
+                  value="{{this.quantity}}"
+                  class="w-16 px-1 py-0.5 rounded border text-[11px]"
+                >
+                <select name="unit" class="border rounded px-1 py-0.5 text-[11px]">
+                  <option value="G" {{#if (eq this.unit "G")}}selected{{/if}}>g</option>
+                  <option value="OZ" {{#if (eq this.unit "OZ")}}selected{{/if}}>oz</option>
+                  <option value="ML" {{#if (eq this.unit "ML")}}selected{{/if}}>ml</option>
+                  <option value="CUP" {{#if (eq this.unit "CUP")}}selected{{/if}}>cup</option>
+                  <option value="PIECE" {{#if (eq this.unit "PIECE")}}selected{{/if}}>pc</option>
+                  <option value="SLICE" {{#if (eq this.unit "SLICE")}}selected{{/if}}>slice</option>
+                </select>
+                <button class="px-2 py-0.5 rounded bg-emerald-500 text-white text-[11px]">
+                  Add
+                </button>
+              </form>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="text-[11px] text-slate-500">
+          Once you start logging, your recent foods will appear here for one-tap logging.
+        </p>
+      {{/if}}
+    </div>
+  </div>
+</section>

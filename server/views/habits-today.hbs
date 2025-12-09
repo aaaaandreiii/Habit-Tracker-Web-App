@@ -1,0 +1,139 @@
+<section class="space-y-4">
+  <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">Today's Habits</h1>
+      <p class="text-xs text-slate-500">
+        Tap to log quickly. Use “Edit Habits” to reorder, edit, or delete.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        id="habit-edit-toggle"
+        type="button"
+        class="px-3 py-1 rounded-md border text-xs">
+        Edit Habits
+      </button>
+      <a href="/habits/new" class="px-3 py-1 rounded-md bg-emerald-500 text-white text-xs">
+        + New Habit
+      </a>
+    </div>
+  </header>
+
+  {{!-- current date for logging --}}
+  <input type="hidden" id="habit-current-date" value="{{dateInput currentDate}}">
+
+  {{!-- Date navigation --}}
+  <div class="flex flex-wrap items-center gap-2 text-xs mt-1">
+    <form method="get" action="/habits/today" class="flex items-center gap-2">
+      <button
+        type="submit"
+        name="date"
+        value="{{dateInput prevDate}}"
+        class="px-2 py-1 rounded border">
+        ←
+      </button>
+      <input
+        type="date"
+        name="date"
+        class="px-2 py-1 rounded border"
+        value="{{dateInput currentDate}}">
+      <button
+        type="submit"
+        class="px-2 py-1 rounded bg-emerald-500 text-white">
+        Go
+      </button>
+      <a
+        href="/habits/today"
+        class="ml-2 text-emerald-500">
+        Today
+      </a>
+      <button
+        type="submit"
+        name="date"
+        value="{{dateInput nextDate}}"
+        class="px-2 py-1 rounded border">
+        →
+      </button>
+    </form>
+  </div>
+
+  {{!-- Sort + Filters --}}
+  <div class="flex flex-wrap items-center justify-between gap-2 mt-1 text-[11px]">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-1">
+        <label for="habit-sort-mode" class="text-slate-500">Sort:</label>
+        <select
+          id="habit-sort-mode"
+          class="px-2 py-1 rounded border text-[11px]">
+          <option value="custom">Custom</option>
+          <option value="name_asc">Name (A → Z)</option>
+          <option value="name_desc">Name (Z → A)</option>
+          <option value="progress_desc">Most progress today</option>
+          <option value="progress_asc">Least progress today</option>
+          <option value="category">By category</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <label for="habit-filter-category" class="text-slate-500">Category:</label>
+        <select
+          id="habit-filter-category"
+          class="px-2 py-1 rounded border text-[11px]">
+          <option value="__all__">All</option>
+          {{#if categories.length}}
+            {{#each categories}}
+              <option value="{{this}}">{{this}}</option>
+            {{/each}}
+          {{else}}
+            <option value="__none__">—</option>
+          {{/if}}
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <label for="habit-filter-time" class="text-slate-500">Time:</label>
+        <select
+          id="habit-filter-time"
+          class="px-2 py-1 rounded border text-[11px]">
+          <option value="__all__">All</option>
+          <option value="DAY">Day</option>
+          <option value="NIGHT">Night</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="text-slate-500">
+      Drag cards in Edit mode to change custom order.
+    </p>
+  </div>
+
+  <div class="habit-list-container grid gap-3 md:grid-cols-2 mt-3">
+    {{#if habits.length}}
+      {{#each habits}}
+        <div
+          class="habit-card-wrapper"
+          data-habit-id="{{this.id}}"
+          data-habit-name="{{this.name}}"
+          data-habit-type="{{this.habitType}}"
+          data-habit-target="{{this.targetValue}}"
+          data-habit-sort-order="{{this.sortOrder}}"
+          data-category="{{this.category}}"
+          data-time-of-day="{{this.timeOfDay}}">
+          {{> habit-card habit=this}}
+        </div>
+      {{/each}}
+    {{else}}
+      <div class="text-xs text-slate-500 col-span-full bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+        You don't have any habits yet. Create your first one with the “New Habit” button above.
+      </div>
+    {{/if}}
+  </div>
+
+  <div class="mt-4 flex flex-wrap gap-3 text-xs">
+    <a href="/habits/heatmap" class="text-emerald-500 hover:underline">Calendar / Heatmap</a>
+    <a href="/habits/matrix" class="text-emerald-500 hover:underline">Spreadsheet view</a>
+    <a href="/habits/goals" class="text-emerald-500 hover:underline">Goals & Progress</a>
+  </div>
+</section>
+
+<script src="/js/habits.js"></script>

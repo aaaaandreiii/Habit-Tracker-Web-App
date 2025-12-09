@@ -1,0 +1,78 @@
+<div
+  class="habit-card-wrapper mb-2"
+  data-habit-id="{{habit.id}}"
+  data-habit-name="{{habit.name}}"
+>
+  <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2">
+    <div class="flex items-center gap-2">
+      <span class="h-6 w-1 rounded-full" style="background-color: {{habit.color}};"></span>
+      <div class="text-xs">
+        <p class="font-medium flex items-center gap-1">
+          {{#if habit.icon}}<span>{{habit.icon}}</span>{{/if}}
+          {{habit.name}}
+        </p>
+        {{#if habit.description}}
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+            {{habit.description}}
+          </p>
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 text-[11px]">
+      {{#if (eq habit.habitType "BOOLEAN")}}
+        <button
+          class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700"
+          data-habit-id="{{habit.id}}"
+          data-habit-type="BOOLEAN"
+        >
+          ✓ Done
+        </button>
+      {{else}}
+        <div class="flex items-center gap-1">
+          <button
+            class="habit-minus w-7 h-7 rounded-full border text-xs"
+            data-habit-id="{{habit.id}}"
+          >
+            −
+          </button>
+          <input
+            type="number"
+            class="habit-value w-16 text-center text-xs border rounded"
+            data-habit-id="{{habit.id}}"
+            data-target-value="{{habit.targetValue}}"
+            value="{{#if habit.logs.[0]}}{{habit.logs.[0].value}}{{else}}0{{/if}}"
+            min="0"
+          >
+          <button
+            class="habit-plus w-7 h-7 rounded-full border text-xs"
+            data-habit-id="{{habit.id}}"
+          >
+            +
+          </button>
+        </div>
+      {{/if}}
+
+      <!-- Edit/Delete actions – hidden unless body.habit-edit-mode -->
+      <div class="habit-actions flex items-center gap-1 ml-2">
+        <a
+          href="/habits/{{habit.id}}/edit"
+          class="px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-[10px]"
+        >
+          Edit
+        </a>
+        <form
+          action="/habits/{{habit.id}}/delete"
+          method="post"
+          onsubmit="return confirm('Delete this habit? This cannot be undone.');"
+        >
+          <button
+            class="px-2 py-1 rounded-md bg-rose-500 text-white text-[10px] hover:bg-rose-600"
+          >
+            Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

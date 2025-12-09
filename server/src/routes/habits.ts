@@ -1,0 +1,631 @@
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { prisma } from '../lib/prisma';
+import { getTodayHabits, logHabit } from '../services/habitService';
+import { HabitStatus } from '@prisma/client';
+import {
+  parseISO,
+  startOfDay,
+  subDays,
+  addDays,
+  format,
+  startOfWeek,
+  addWeeks,
+  subWeeks,
+  getISOWeek,
+} from 'date-fns';
+
+const router = Router();
+
+/* Today view with quick logging */
+router.get('/today', requireAuth, async (req, res) => {
+  const userId = req.currentUser!.id;
+  const dateParam = req.query.date;
+
+  let currentDate = new Date();
+
+  if (typeof dateParam === 'string' && dateParam.trim() !== '') {
+    try {
+      const parsed = parseISO(dateParam);
+      if (!isNaN(parsed.getTime())) {
+        currentDate = parsed;
+      }
+    } catch {
+      // ignore bad date and fall back to today
+    }
+  }
+
+  const habits = await getTodayHabits(userId, currentDate);
+
+  const prevDate = subDays(currentDate, 1);
+  const nextDate = addDays(currentDate, 1);
+
+  res.render('habits-today', {
+    layout: 'main',
+    title: "Today's Habits",
+    user: req.currentUser,
+    habits,
+    currentDate,
+    prevDate,
+    nextDate,
+  });
+});
+
+/* Habit creation form */
+router.get('/new', requireAuth, (req, res) => {
+  res.render('habits-edit', {
+    layout: 'main',
+    title: 'New Habit',
+    user: req.currentUser,
+    habit: null,
+  });
+});
+
+router.post('/new', requireAuth, async (req, res) => {
+  const userId = req.currentUser!.id;
+  const {
+    name,
+    description,
+    habitType,
+    frequencyType,
+    targetValue,
+    startDate,
+    endDate,
+    category,
+    color,
+    icon,
+    noEndDate,
+    timeOfDay, // NEW
+  } = req.body;
+
+  const maxOrder = await prisma.habit.aggregate({
+    _max: { sortOrder: true },
+    where: { userId },
+  });
+
+  await prisma.habit.create({
+    data: {
+      userId,
+      name,
+      description,
+      habitType,
+      frequencyType,
+      targetValue: targetValue ? Number(targetValue) : null,
+      startDate: startDate ? new Date(startDate) : new Date(),
+      endDate:
+        noEndDate === 'on' || !endDate
+          ? null
+          : new Date(endDate),
+      category,
+      color,
+      icon,
+      timeOfDay: timeOfDay || 'ANY',
+      sortOrder: (maxOrder._max.sortOrder ?? 0) + 1,
+    },
+  });
+
+  res.redirect('/habits/today');
+});
+
+/* Edit habit */
+router.post('/:id/edit', requireAuth, async (req, res) => {
+  const habitId = Number(req.params.id);
+  const {
+    name,
+    description,
+    habitType,
+    frequencyType,
+    targetValue,
+    startDate,
+    endDate,
+    category,
+    color,
+    icon,
+    isArchived,
+    noEndDate,
+    timeOfDay, // NEW
+  } = req.body;
+
+  await prisma.habit.update({
+    where: { id: habitId },
+    data: {
+      name,
+      description,
+      habitType,
+      frequencyType,
+      targetValue: targetValue ? Number(targetValue) : null,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate:
+        noEndDate === 'on'
+          ? null
+          : endDate
+          ? new Date(endDate)
+          : undefined,
+      category,
+      color,
+      icon,
+      isArchived: Boolean(isArchived),
+      timeOfDay: timeOfDay || undefined,
+    },
+  });
+  res.redirect('/habits/today');
+});
+
+router.post('/:id/edit', requireAuth, async (req, res) => {
+  const habitId = Number(req.params.id);
+    const {
+    name,
+    description,
+    habitType,
+    frequencyType,
+    targetValue,
+    startDate,
+    endDate,
+    category,
+    color,
+    icon,
+    isArchived,
+    noEndDate,
+  } = req.body;
+
+  await prisma.habit.update({
+    where: { id: habitId },
+    data: {
+      name,
+      description,
+      habitType,
+      frequencyType,
+      targetValue: targetValue ? Number(targetValue) : null,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate:
+        noEndDate === 'on'
+          ? null
+          : endDate
+          ? new Date(endDate)
+          : undefined, // leave as is if not provided
+      category,
+      color,
+      icon,
+      isArchived: Boolean(isArchived),
+    },
+  });
+  res.redirect('/habits/today');
+});
+
+/* Delete habit (hard delete) */
+router.post('/:id/delete', requireAuth, async (req, res) => {
+  const habitId = Number(req.params.id);
+  const userId = req.currentUser!.id;
+
+  const habit = await prisma.habit.findFirst({
+    where: { id: habitId, userId },
+  });
+
+  if (!habit) {
+    return res.redirect('/habits/today');
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.journalEntryHabit.deleteMany({ where: { habitId } });
+    await tx.habitGoalItem.deleteMany({ where: { habitId } });
+    await tx.habitLog.deleteMany({ where: { habitId } });
+
+    // Any single-habit goals pointing to this habit → detach
+    await tx.habitGoal.updateMany({
+      where: { habitId },
+      data: { habitId: null },
+    });
+
+    await tx.habit.delete({ where: { id: habitId } });
+  });
+
+  res.redirect('/habits/today');
+});
+
+/* Save custom habit order (drag & drop) */
+router.post('/reorder', requireAuth, async (req, res) => {
+  const userId = req.currentUser!.id;
+  const { order } = req.body as {
+    order: { habitId: number; sortOrder: number }[];
+  };
+
+  if (!Array.isArray(order)) {
+    return res.status(400).json({ error: 'Invalid order payload' });
+  }
+
+  await prisma.$transaction(
+    order.map((item) =>
+      prisma.habit.updateMany({
+        where: { id: item.habitId, userId },
+        data: { sortOrder: item.sortOrder },
+      })
+    )
+  );
+
+  res.json({ success: true });
+});
+
+/* Quick log endpoint (AJAX) */
+router.post('/:id/log', requireAuth, async (req, res) => {
+  const habitId = Number(req.params.id);
+  const { status, value, notes, date } = req.body;
+  const parsedDate = date ? parseISO(date) : new Date();
+
+  const log = await logHabit({
+    habitId,
+    date: parsedDate,
+    status: status as HabitStatus,
+    value: value ? Number(value) : undefined,
+    notes,
+  });
+
+  res.json({ success: true, log });
+});
+
+/* Heatmap + trends data for a single habit (still used by charts if you want) */
+router.get('/:id/logs', requireAuth, async (req, res) => {
+  const habitId = Number(req.params.id);
+  const logs = await prisma.habitLog.findMany({
+    where: { habitId, habit: { userId: req.currentUser!.id } },
+    orderBy: { date: 'asc' },
+  });
+  res.json(logs);
+});
+
+/* Habit Heatmap for last 30 days (all habits combined) */
+/* Habit Heatmap for last 30 days (all habits combined) */
+router.get('/heatmap', requireAuth, async (req, res) => {
+  const userId = req.currentUser!.id;
+  const today = startOfDay(new Date());
+  const from = subDays(today, 29);
+
+  const logs = await prisma.habitLog.findMany({
+    where: {
+      habit: { userId },
+      date: { gte: from, lte: today },
+      status: HabitStatus.COMPLETED,
+    },
+    include: { habit: true },
+  });
+
+  const counts: Record<string, number> = {};
+  for (const log of logs) {
+    const key = format(startOfDay(log.date), 'yyyy-MM-dd');
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+
+  const days: { key: string; label: string; day: string; completions: number }[] = [];
+  for (let i = 0; i < 30; i++) {
+    const d = addDays(from, i);
+    const key = format(d, 'yyyy-MM-dd');
+    days.push({
+      key,
+      label: format(d, 'MMM d'),
+      day: format(d, 'd'),
+      completions: counts[key] ?? 0,
+    });
+  }
+
+  res.render('habits-heatmap', {
+    layout: 'main',
+    title: 'Habit Heatmap',
+    user: req.currentUser,
+    heatmapDays: days,
+  });
+});
+
+/* Spreadsheet-style habit matrix view (weeks × habits) */
+router.get('/matrix', requireAuth, async (req, res) => {
+  const userId = req.currentUser!.id;
+  const offset = Number(req.query.offset || 0); // 0 = current week
+
+  const today = new Date();
+  const baseWeekStart = startOfWeek(addWeeks(today, offset), { weekStartsOn: 1 }); // Monday
+
+  const weekStarts = [
+    subWeeks(baseWeekStart, 1),
+    baseWeekStart,
+    addWeeks(baseWeekStart, 1),
+  ];
+
+  const weeks = weekStarts.map((start) => {
+    const end = addDays(start, 6);
+    return {
+      start,
+      end,
+      label: `Week ${getISOWeek(start)}`,
+    };
+  });
+
+  const globalStart = weeks[0].start;
+  const globalEnd = weeks[weeks.length - 1].end;
+
+  const habits = await prisma.habit.findMany({
+    where: { userId, isArchived: false },
+    orderBy: { name: 'asc' },
+  });
+
+  if (!habits.length) {
+    return res.render('habits-matrix', {
+      layout: 'main',
+      title: 'Habit Matrix',
+      user: req.currentUser,
+      habits: [],
+      weeks: [],
+      days: [],
+      rows: [],
+      dailySummaries: [],
+      habitSummaries: [],
+      offset,
+      prevOffset: offset - 1,
+      nextOffset: offset + 1,
+    });
+  }
+
+  const logs = await prisma.habitLog.findMany({
+    where: {
+      habit: { userId },
+      date: {
+        gte: startOfDay(globalStart),
+        lt: addDays(startOfDay(globalEnd), 1),
+      },
+    },
+  });
+
+  type Day = { dateKey: string; label: string; weekday: string; weekIndex: number };
+  type WeekView = { label: string; days: Day[] };
+
+  const days: Day[] = [];
+  const weeksForView: WeekView[] = [];
+
+  weeks.forEach((week, weekIndex) => {
+    const weekDays: Day[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(week.start, i);
+      const day: Day = {
+        dateKey: format(d, 'yyyy-MM-dd'),
+        label: format(d, 'MMM d'),
+        weekday: format(d, 'EEE'),
+        weekIndex,
+      };
+      weekDays.push(day);
+      days.push(day);
+    }
+    weeksForView.push({
+      label: week.label,
+      days: weekDays,
+    });
+  });
+
+  // Map logs by habit + date
+  const logMap = new Map<string, (typeof logs)[number]>();
+  for (const log of logs) {
+    const key = `${log.habitId}-${format(startOfDay(log.date), 'yyyy-MM-dd')}`;
+    logMap.set(key, log);
+  }
+
+  const rows = habits.map((habit) => {
+    const cells = days.map((day) => {
+      const log = logMap.get(`${habit.id}-${day.dateKey}`);
+      const isCompleted = log?.status === HabitStatus.COMPLETED;
+      return {
+        dateKey: day.dateKey,
+        isCompleted,
+        status: log?.status ?? null,
+        value: log?.value ?? null,
+      };
+    });
+
+    const expectedCount = days.length;
+    const completedCount = cells.filter((c) => c.isCompleted).length;
+    const progressPercent =
+      expectedCount > 0 ? Math.round((completedCount / expectedCount) * 100) : 0;
+
+    return {
+      habit,
+      cells,
+      expectedCount,
+      completedCount,
+      progressPercent,
+    };
+  });
+
+  const totalHabits = habits.length;
+  const dailySummaries = days.map((day, index) => {
+    let completed = 0;
+    rows.forEach((row) => {
+      if (row.cells[index].isCompleted) completed += 1;
+    });
+    const notDone = totalHabits - completed;
+    const percent = totalHabits > 0 ? Math.round((completed / totalHabits) * 100) : 0;
+    return {
+      dateKey: day.dateKey,
+      label: day.label,
+      completed,
+      notDone,
+      percent,
+    };
+  });
+
+  const habitSummaries = rows.map((row) => ({
+    habitName: row.habit.name,
+    expected: row.expectedCount,
+    completed: row.completedCount,
+    progressPercent: row.progressPercent,
+  }));
+
+  res.render('habits-matrix', {
+    layout: 'main',
+    title: 'Habit Matrix',
+    user: req.currentUser,
+    habits,
+    weeks: weeksForView,
+    days,
+    rows,
+    dailySummaries,
+    habitSummaries,
+    offset,
+    prevOffset: offset - 1,
+    nextOffset: offset + 1,
+  });
+});
+
+/* Goals & streaks view – multi-habit goals */
+router.get('/goals', requireAuth, async (req, res) => {
+  const userId = req.currentUser!.id;
+
+  const [habits, goalsRaw] = await Promise.all([
+    prisma.habit.findMany({
+      where: { userId, isArchived: false },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.habitGoal.findMany({
+      where: { userId },
+      include: {
+        items: { include: { habit: true } },
+        habit: true,
+      },
+      orderBy: { endDate: 'asc' },
+    }),
+  ]);
+
+  const goals = await Promise.all(
+    goalsRaw.map(async (goal) => {
+      // Multi-habit goal if it has items
+      if (goal.items.length > 0) {
+        const totalWeightedTarget = goal.items.reduce(
+          (sum, item) => sum + item.targetCount * item.weight,
+          0
+        );
+
+        let weightedCompleted = 0;
+        const segments: {
+          habitName: string;
+          completed: number;
+          target: number;
+          weight: number;
+        }[] = [];
+
+        for (const item of goal.items) {
+          const completedCount = await prisma.habitLog.count({
+            where: {
+              habitId: item.habitId,
+              status: HabitStatus.COMPLETED,
+              date: { gte: goal.startDate, lte: goal.endDate },
+            },
+          });
+
+          const capped = Math.min(completedCount, item.targetCount);
+          weightedCompleted += capped * item.weight;
+
+          segments.push({
+            habitName: item.habit.name,
+            completed: completedCount,
+            target: item.targetCount,
+            weight: item.weight,
+          });
+        }
+
+        const progressPercent =
+          totalWeightedTarget > 0
+            ? Math.min(100, (weightedCompleted / totalWeightedTarget) * 100)
+            : 0;
+
+        return {
+          ...goal,
+          isMulti: true,
+          progressPercent,
+          totalWeightedTarget,
+          segments,
+        };
+      }
+
+      // Legacy single-habit goal
+      const progressPercent =
+        goal.target > 0
+          ? Math.min(100, (goal.currentProgress / goal.target) * 100)
+          : 0;
+
+      return {
+        ...goal,
+        isMulti: false,
+        progressPercent,
+        totalWeightedTarget: goal.target,
+        segments: [],
+      };
+    })
+  );
+
+  res.render('habits-goals', {
+    layout: 'main',
+    title: 'Habit Goals',
+    user: req.currentUser,
+    habits,
+    goals,
+  });
+});
+
+/* Create a new multi-habit goal */
+router.post('/goals', requireAuth, async (req, res) => {
+  const userId = req.currentUser!.id;
+  const {
+    goalScope,
+    startDate,
+    endDate,
+    description,
+  } = req.body;
+
+  let { habitIds, targetCounts, weights } = req.body;
+
+  // Normalize to arrays
+  if (!Array.isArray(habitIds)) habitIds = habitIds ? [habitIds] : [];
+  if (!Array.isArray(targetCounts)) targetCounts = targetCounts ? [targetCounts] : [];
+  if (!Array.isArray(weights)) weights = weights ? [weights] : [];
+
+  const items = habitIds
+    .map((id: string, index: number) => {
+      const habitId = Number(id);
+      const targetCount = Number(targetCounts[index] || 0);
+      const weight = weights[index] ? Number(weights[index]) : 1;
+
+      if (!habitId || !targetCount) return null;
+      return { habitId, targetCount, weight: weight || 1 };
+    })
+    .filter(Boolean) as { habitId: number; targetCount: number; weight: number }[];
+
+  if (!items.length) {
+    // nothing selected – for now, just redirect back
+    return res.redirect('/habits/goals');
+  }
+
+  const totalWeightedTarget = items.reduce(
+    (sum, item) => sum + item.targetCount * item.weight,
+    0
+  );
+
+  const goal = await prisma.habitGoal.create({
+    data: {
+      userId,
+      habitId: null, // multi-habit
+      goalScope,
+      startDate: startDate ? new Date(startDate) : new Date(),
+      endDate: endDate ? new Date(endDate) : new Date(),
+      description,
+      target: Math.round(totalWeightedTarget),
+      currentProgress: 0, // legacy field, not used for multi-habit calc
+    },
+  });
+
+  await prisma.habitGoalItem.createMany({
+    data: items.map((item) => ({
+      habitGoalId: goal.id,
+      habitId: item.habitId,
+      targetCount: item.targetCount,
+      weight: item.weight,
+    })),
+  });
+
+  res.redirect('/habits/goals');
+});
+
+export default router;

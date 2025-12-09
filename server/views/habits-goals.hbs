@@ -1,0 +1,170 @@
+<section class="space-y-4">
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">Habit Goals</h1>
+      <p class="text-xs text-slate-500">
+        Combine multiple habits into flexible short-term or long-term goals.
+      </p>
+    </div>
+    <a href="/habits/today" class="px-3 py-1 rounded-md border text-xs">
+      ← Back to Today
+    </a>
+  </header>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <!-- Goal Builder -->
+    <form
+      method="post"
+      action="/habits/goals"
+      class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs space-y-3">
+      <h2 class="text-sm font-semibold mb-1">Create a Goal</h2>
+
+      <div>
+        <label class="block mb-1">Goal name / description</label>
+        <textarea
+          name="description"
+          rows="2"
+          class="w-full px-2 py-1 rounded border"
+          placeholder="e.g. 'Morning routine streak' or 'Move more this month'"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block mb-1">Goal Type</label>
+          <select name="goalScope" class="w-full px-2 py-1 rounded border">
+            <option value="SHORT_TERM">Short-term</option>
+            <option value="LONG_TERM">Long-term</option>
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1">Duration</label>
+          <p class="text-[11px] text-slate-500">
+            Pick start and end dates below.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block mb-1">Start date</label>
+          <input name="startDate" type="date" class="w-full px-2 py-1 rounded border">
+        </div>
+        <div>
+          <label class="block mb-1">End date</label>
+          <input name="endDate" type="date" class="w-full px-2 py-1 rounded border">
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[11px] uppercase tracking-wide text-slate-500">
+            Habits in this goal
+          </span>
+          <button
+            id="add-goal-item"
+            class="px-2 py-0.5 rounded-full border text-[11px]"
+            type="button">
+            + Add habit
+          </button>
+        </div>
+
+        <div id="goal-items" class="space-y-2">
+          <div class="goal-item-row flex items-center gap-2">
+            <select name="habitIds[]" class="flex-1 px-2 py-1 rounded border">
+              <option value="">Select habit…</option>
+              {{#each habits}}
+                <option value="{{this.id}}">{{this.name}}</option>
+              {{/each}}
+            </select>
+            <input
+              type="number"
+              name="targetCounts[]"
+              min="1"
+              value="10"
+              class="w-16 px-2 py-1 rounded border text-[11px]"
+              placeholder="Target">
+            <input
+              type="number"
+              name="weights[]"
+              step="0.1"
+              min="0"
+              value="1"
+              class="w-14 px-2 py-1 rounded border text-[11px]"
+              title="Weight (importance)">
+          </div>
+        </div>
+
+        <p class="mt-2 text-[11px] text-slate-500">
+          Example: Add “Drink Water” with target 20 and weight 1, plus “Exercise” with target 8 and weight 2.
+          The goal will complete faster when you focus on the higher-weight habit.
+        </p>
+      </div>
+
+      <button class="px-4 py-2 rounded bg-emerald-500 text-white text-xs mt-2">
+        Save Goal
+      </button>
+    </form>
+
+    <!-- Goals list -->
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+      <h2 class="text-sm font-semibold mb-3">Your Goals</h2>
+
+      {{#if goals.length}}
+        <div class="space-y-3 max-h-96 overflow-auto">
+          {{#each goals}}
+            <article class="border-b border-slate-100 dark:border-slate-800 pb-3 last:border-b-0">
+              <div class="flex items-center justify-between mb-1">
+                <p class="text-[11px] text-slate-500">
+                  {{goalScope}} ·
+                  {{#if isMulti}}Multi-habit goal{{else}}Single habit{{/if}}
+                </p>
+                <p class="text-[11px] text-slate-500">
+                  {{this.progressPercent}}%
+                </p>
+              </div>
+
+              {{#if description}}
+                <p class="mb-1">{{description}}</p>
+              {{/if}}
+
+              <p class="text-[11px] text-slate-500 mb-1">
+                {{startDate}} → {{endDate}}
+              </p>
+
+              <!-- Fluid-style progress bar -->
+              <div class="goal-progress mt-1">
+                <div
+                  class="goal-progress-fill"
+                  style="width: {{this.progressPercent}}%;">
+                </div>
+              </div>
+
+              {{#if isMulti}}
+                <ul class="mt-2 space-y-1 text-[11px] text-slate-500">
+                  {{#each segments}}
+                    <li>
+                      <span class="font-medium">{{habitName}}</span>:
+                      {{completed}} / {{target}} completions
+                      (weight {{weight}})
+                    </li>
+                  {{/each}}
+                </ul>
+              {{else}}
+                <p class="mt-2 text-[11px] text-slate-500">
+                  {{currentProgress}} / {{target}} completions
+                  {{#if habit}}for <span class="font-medium">{{habit.name}}</span>{{/if}}
+                </p>
+              {{/if}}
+            </article>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="text-[11px] text-slate-500">
+          No goals yet. Use the builder on the left to create one that combines your favourite habits.
+        </p>
+      {{/if}}
+    </div>
+  </div>
+</section>
+
+<script src="/js/goal-builder.js"></script>

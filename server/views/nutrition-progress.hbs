@@ -1,0 +1,70 @@
+<!-- server/views/nutrition-progress.hbs -->
+<section class="space-y-4">
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">Progress</h1>
+      <p class="text-xs text-slate-500">
+        See how your calories and weight trend over time.
+      </p>
+    </div>
+    <a href="/nutrition/daily" class="px-3 py-1 rounded-md border text-xs">
+      ← Back to Today
+    </a>
+  </header>
+
+  <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs mb-2">
+    <h2 class="text-sm font-semibold mb-2">Today's Summary</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div>
+        <p class="text-slate-500">Goal</p>
+        <p class="text-lg font-semibold">{{summary.goal}}</p>
+      </div>
+      <div>
+        <p class="text-slate-500">Eaten</p>
+        <p class="text-lg font-semibold">{{summary.caloriesEaten}}</p>
+      </div>
+      <div>
+        <p class="text-slate-500">Burned</p>
+        <p class="text-lg font-semibold text-emerald-500">+{{summary.caloriesBurned}}</p>
+      </div>
+      <div>
+        <p class="text-slate-500">Remaining</p>
+        <p class="text-lg font-semibold">{{summary.remaining}}</p>
+      </div>
+    </div>
+
+    <form action="/nutrition/weight" method="post" class="flex flex-col sm:flex-row gap-2 mt-3 text-xs">
+      <input
+        name="weightKg"
+        type="number"
+        step="0.1"
+        class="w-full sm:w-40 px-2 py-1 rounded border"
+        placeholder="Today's weight (kg)">
+      <input
+        name="date"
+        type="date"
+        class="w-full sm:w-40 px-2 py-1 rounded border">
+      <button class="px-3 py-1 rounded bg-emerald-500 text-white">
+        Log weight
+      </button>
+    </form>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+      <h2 class="text-sm font-semibold mb-2">Weight (Last 30 Days)</h2>
+      <div class="h-56">
+        <canvas id="weightChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+      <h2 class="text-sm font-semibold mb-2">Calories (Last 30 Days)</h2>
+      <div class="h-56">
+        <canvas id="calorieTrendChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="/js/nutrition-progress.js"></script>

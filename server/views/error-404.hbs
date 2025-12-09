@@ -1,0 +1,24 @@
+<section class="max-w-md mx-auto mt-12 text-center bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-6 text-sm">
+  <h1 class="text-2xl font-semibold mb-2">Page not found</h1>
+  <p class="text-slate-500 mb-4">
+    We couldn't find <span class="font-mono break-all">{{url}}</span>.
+  </p>
+
+  <div class="flex flex-wrap justify-center gap-2 text-xs">
+    {{#if user}}
+      <a href="/dashboard" class="px-3 py-1 rounded bg-emerald-500 text-white">
+        Go to Dashboard
+      </a>
+      <a href="/habits/today" class="px-3 py-1 rounded border">
+        View Today's Habits
+      </a>
+    {{else}}
+      <a href="/auth/login" class="px-3 py-1 rounded bg-emerald-500 text-white">
+        Log in
+      </a>
+      <a href="/auth/register" class="px-3 py-1 rounded border">
+        Create an account
+      </a>
+    {{/if}}
+  </div>
+</section>

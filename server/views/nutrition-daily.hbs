@@ -1,0 +1,51 @@
+<section class="space-y-4">
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">Today's Nutrition</h1>
+      <p class="text-xs text-slate-500">
+        Track meals, macros, and micro-nutrients.
+      </p>
+    </div>
+    <a href="/nutrition/foods/search" class="px-3 py-1 rounded-md bg-emerald-500 text-white text-xs">
+      + Add Food
+    </a>
+  </header>
+
+  <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div>
+        <p class="text-slate-500">Calories</p>
+        <p class="text-lg font-semibold">{{summary.caloriesEaten}} / {{summary.goal}}</p>
+      </div>
+      <div>
+        <p class="text-slate-500">Protein</p>
+        <p class="text-lg font-semibold">{{summary.protein}} g</p>
+      </div>
+      <div>
+        <p class="text-slate-500">Carbs</p>
+        <p class="text-lg font-semibold">{{summary.carbs}} g</p>
+      </div>
+      <div>
+        <p class="text-slate-500">Fat</p>
+        <p class="text-lg font-semibold">{{summary.fat}} g</p>
+      </div>
+    </div>
+
+    <div class="mt-2">
+      <canvas id="macroChart" class="w-full h-40"></canvas>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+    <h2 class="text-sm font-semibold mb-3">Meals</h2>
+
+    {{#each entries}}
+      {{> meal-row entry=this}}
+    {{/each}}
+  </div>
+</section>
+
+<script>
+  window.__NUTRITION_SUMMARY__ = {{{json summary}}};
+</script>
+<script src="/js/nutrition.js"></script>
