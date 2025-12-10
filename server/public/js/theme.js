@@ -6,7 +6,15 @@
 
   function applyTheme(theme) {
     const isDark = theme === 'dark';
+
+    // Tailwind dark mode
     root.classList.toggle('dark', isDark);
+
+    // For any libs that look at data-theme
+    root.setAttribute('data-theme', theme);
+
+    // Tell the browser how to render form controls, scrollbars, etc.
+    root.style.colorScheme = isDark ? 'dark' : 'light';
 
     if (btn) {
       btn.textContent = isDark ? '🌙 Dark' : '☀️ Light';
@@ -15,17 +23,14 @@
     localStorage.setItem('theme', theme);
   }
 
-  // Initial theme
-  if (stored === 'dark' || stored === 'light') {
-    applyTheme(stored);
-  } else if (window.matchMedia &&
-             window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    applyTheme('dark');
-  } else {
-    applyTheme('light');
-  }
+  // Ignore OS preference; default to dark if nothing stored
+  const initial =
+    stored === 'dark' || stored === 'light'
+      ? stored
+      : 'dark';
 
-  // Toggle on click
+  applyTheme(initial);
+
   if (btn) {
     btn.addEventListener('click', () => {
       const currentlyDark = root.classList.contains('dark');

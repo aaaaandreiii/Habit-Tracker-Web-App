@@ -281,3 +281,48 @@ body.habit-edit-mode .habit-card-wrapper {
 }
 
 /* Bottom nav (if you already have it) can live here too if needed */
+/* Edit/Delete buttons: hidden by default */
+.habit-actions {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+}
+
+/* When Edit mode is on, fade/slide them in */
+body.habit-edit-mode .habit-actions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Optional: give cards a subtle "editing" state */
+body.habit-edit-mode .habit-card-content {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35);
+}
+
+/* Habit card water-fill animation */
+.habit-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.habit-card-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(16, 185, 129, 0.18),
+    rgba(56, 189, 248, 0.16)
+  );
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
+  transition: transform 0.7s ease-out;
+  z-index: 0;
+}
+
+.habit-card-content {
+  position: relative;
+  z-index: 1;
+}
