@@ -7,7 +7,360 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ENUMS
+model User {
+  id              Int             @id @default(autoincrement())
+  email           String          @unique
+  passwordHash    String
+  name            String
+  age             Int?
+  heightCm        Float?
+  weightKg        Float?
+  gender          Gender?
+  activityLevel   ActivityLevel?  @default(SEDENTARY)
+  goalType        GoalType?       @default(MAINTAIN)
+  calorieGoal     Int?
+  proteinGoalG    Float?
+  carbsGoalG      Float?
+  fatGoalG        Float?
+  waterGoalMl     Int?            @default(2000)
+  unitsMetric     Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  customFoods     CustomFood[]
+  exerciseLogs    ExerciseLog[]
+  habits          Habit[]
+  habitGoals      HabitGoal[]
+  journalEntries  JournalEntry[]
+  meals           Meal[]
+  recipes         Recipe[]
+  userFoodEntries UserFoodEntry[]
+  waterLogs       WaterLog[]
+  weightLogs      WeightLog[]
+}
+
+model Habit {
+  id             Int                 @id @default(autoincrement())
+  userId         Int
+  name           String
+  description    String?
+  habitType      HabitType
+  frequencyType  FrequencyType
+  targetValue    Float?
+  timesPerPeriod Int?
+  startDate      DateTime
+  endDate        DateTime?
+  category       String?
+  color          String?
+  icon           String?
+  isArchived     Boolean             @default(false)
+  streakGrace    Int?                @default(0)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  sortOrder      Int                 @default(0)
+  timeOfDay      HabitTimeOfDay      @default(ANY)
+  dayOfMonth     Int?
+  daysOfWeek     String?
+  yearlyDay      Int?
+  yearlyMonth    Int?
+  user           User                @relation(fields: [userId], references: [id])
+  goals          HabitGoal[]
+  HabitGoalItem  HabitGoalItem[]
+  logs           HabitLog[]
+  scheduleDates  HabitScheduleDate[]
+  journalLinks   JournalEntryHabit[]
+
+  @@index([userId, isArchived])
+  @@index([userId, sortOrder])
+}
+
+model HabitLog {
+  id        Int         @id @default(autoincrement())
+  habitId   Int
+  date      DateTime
+  status    HabitStatus
+  value     Float?
+  notes     String?
+  createdAt DateTime    @default(now())
+  habit     Habit       @relation(fields: [habitId], references: [id])
+
+  @@index([habitId, date])
+}
+
+model HabitGoal {
+  id              Int             @id @default(autoincrement())
+  userId          Int
+  habitId         Int?
+  goalScope       GoalScope
+  startDate       DateTime
+  endDate         DateTime
+  target          Int
+  description     String?
+  currentProgress Int             @default(0)
+  createdAt       DateTime        @default(now())
+  habit           Habit?          @relation(fields: [habitId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
+  items           HabitGoalItem[]
+
+  @@index([userId])
+  @@index([habitId])
+}
+
+model HabitScheduleDate {
+  id      Int      @id @default(autoincrement())
+  habitId Int
+  date    DateTime
+  habit   Habit    @relation(fields: [habitId], references: [id])
+
+  @@index([habitId, date])
+}
+
+model JournalEntry {
+  id         Int                 @id @default(autoincrement())
+  userId     Int
+  date       DateTime
+  title      String
+  content    String
+  tags       String?
+  createdAt  DateTime            @default(now())
+  user       User                @relation(fields: [userId], references: [id])
+  habitLinks JournalEntryHabit[]
+
+  @@index([userId, date])
+}
+
+model JournalEntryHabit {
+  journalEntryId Int
+  habitId        Int
+  habit          Habit        @relation(fields: [habitId], references: [id])
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id])
+
+  @@id([journalEntryId, habitId])
+  @@index([habitId], map: "JournalEntryHabit_habitId_fkey")
+}
+
+model FoodItem {
+  id                Int                @id @default(autoincrement())
+  name              String
+  category          String?
+  baseServingSizeG  Float              @default(100)
+  calories          Float
+  protein           Float              @default(0)
+  carbs             Float              @default(0)
+  fat               Float              @default(0)
+  fiber             Float              @default(0)
+  sugar             Float              @default(0)
+  sodium            Float              @default(0)
+  vitaminC          Float              @default(0)
+  iron              Float              @default(0)
+  isVerified        Boolean            @default(false)
+  source            String?
+  mealItems         MealItem[]
+  recipeIngredients RecipeIngredient[]
+  userEntries       UserFoodEntry[]
+
+  @@index([name])
+  @@index([category])
+}
+
+model BrandedFoodItem {
+  id                Int                @id @default(autoincrement())
+  brandName         String
+  productName       String
+  barcode           String             @unique
+  servingSizeG      Float              @default(100)
+  calories          Float
+  protein           Float              @default(0)
+  carbs             Float              @default(0)
+  fat               Float              @default(0)
+  fiber             Float              @default(0)
+  sugar             Float              @default(0)
+  sodium            Float              @default(0)
+  isVerified        Boolean            @default(false)
+  source            String?
+  mealItems         MealItem[]
+  recipeIngredients RecipeIngredient[]
+  userEntries       UserFoodEntry[]
+
+  @@index([brandName])
+  @@index([productName])
+}
+
+model CustomFood {
+  id                    Int                @id @default(autoincrement())
+  userId                Int
+  name                  String
+  servingSizeDesc       String?
+  baseServingSizeAmount Float              @default(100)
+  baseServingSizeUnit   Unit               @default(G)
+  calories              Float
+  protein               Float              @default(0)
+  carbs                 Float              @default(0)
+  fat                   Float              @default(0)
+  fiber                 Float              @default(0)
+  sugar                 Float              @default(0)
+  sodium                Float              @default(0)
+  user                  User               @relation(fields: [userId], references: [id])
+  mealItems             MealItem[]
+  recipeIngredients     RecipeIngredient[]
+  userEntries           UserFoodEntry[]
+
+  @@index([userId])
+}
+
+model Recipe {
+  id               Int                @id @default(autoincrement())
+  userId           Int
+  name             String
+  description      String?
+  instructions     String?
+  numberOfServings Int                @default(1)
+  caloriesPerServ  Float              @default(0)
+  proteinPerServ   Float              @default(0)
+  carbsPerServ     Float              @default(0)
+  fatPerServ       Float              @default(0)
+  createdAt        DateTime           @default(now())
+  mealItems        MealItem[]
+  user             User               @relation(fields: [userId], references: [id])
+  ingredients      RecipeIngredient[]
+  userEntries      UserFoodEntry[]
+
+  @@index([userId])
+}
+
+model RecipeIngredient {
+  id                Int              @id @default(autoincrement())
+  recipeId          Int
+  foodItemId        Int?
+  brandedFoodItemId Int?
+  customFoodId      Int?
+  quantity          Float
+  unit              Unit
+  brandedFoodItem   BrandedFoodItem? @relation(fields: [brandedFoodItemId], references: [id])
+  customFood        CustomFood?      @relation(fields: [customFoodId], references: [id])
+  foodItem          FoodItem?        @relation(fields: [foodItemId], references: [id])
+  recipe            Recipe           @relation(fields: [recipeId], references: [id])
+
+  @@index([recipeId])
+  @@index([brandedFoodItemId], map: "RecipeIngredient_brandedFoodItemId_fkey")
+  @@index([customFoodId], map: "RecipeIngredient_customFoodId_fkey")
+  @@index([foodItemId], map: "RecipeIngredient_foodItemId_fkey")
+}
+
+model UserFoodEntry {
+  id                Int              @id @default(autoincrement())
+  userId            Int
+  dateTime          DateTime
+  mealType          MealType
+  foodItemId        Int?
+  brandedFoodItemId Int?
+  customFoodId      Int?
+  recipeId          Int?
+  quantity          Float
+  unit              Unit
+  calories          Float            @default(0)
+  protein           Float            @default(0)
+  carbs             Float            @default(0)
+  fat               Float            @default(0)
+  fiber             Float            @default(0)
+  sugar             Float            @default(0)
+  sodium            Float            @default(0)
+  createdAt         DateTime         @default(now())
+  brandedFoodItem   BrandedFoodItem? @relation(fields: [brandedFoodItemId], references: [id])
+  customFood        CustomFood?      @relation(fields: [customFoodId], references: [id])
+  foodItem          FoodItem?        @relation(fields: [foodItemId], references: [id])
+  recipe            Recipe?          @relation(fields: [recipeId], references: [id])
+  user              User             @relation(fields: [userId], references: [id])
+
+  @@index([userId, dateTime])
+  @@index([brandedFoodItemId], map: "UserFoodEntry_brandedFoodItemId_fkey")
+  @@index([customFoodId], map: "UserFoodEntry_customFoodId_fkey")
+  @@index([foodItemId], map: "UserFoodEntry_foodItemId_fkey")
+  @@index([recipeId], map: "UserFoodEntry_recipeId_fkey")
+}
+
+model Meal {
+  id          Int        @id @default(autoincrement())
+  userId      Int
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id])
+  items       MealItem[]
+
+  @@index([userId], map: "Meal_userId_fkey")
+}
+
+model MealItem {
+  id                Int              @id @default(autoincrement())
+  mealId            Int
+  foodItemId        Int?
+  brandedFoodItemId Int?
+  customFoodId      Int?
+  recipeId          Int?
+  quantity          Float
+  unit              Unit
+  brandedFoodItem   BrandedFoodItem? @relation(fields: [brandedFoodItemId], references: [id])
+  customFood        CustomFood?      @relation(fields: [customFoodId], references: [id])
+  foodItem          FoodItem?        @relation(fields: [foodItemId], references: [id])
+  meal              Meal             @relation(fields: [mealId], references: [id])
+  recipe            Recipe?          @relation(fields: [recipeId], references: [id])
+
+  @@index([brandedFoodItemId], map: "MealItem_brandedFoodItemId_fkey")
+  @@index([customFoodId], map: "MealItem_customFoodId_fkey")
+  @@index([foodItemId], map: "MealItem_foodItemId_fkey")
+  @@index([mealId], map: "MealItem_mealId_fkey")
+  @@index([recipeId], map: "MealItem_recipeId_fkey")
+}
+
+model WaterLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  dateTime  DateTime
+  amount    Float
+  unit      Unit     @default(ML)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, dateTime])
+}
+
+model ExerciseLog {
+  id             Int            @id @default(autoincrement())
+  userId         Int
+  dateTime       DateTime
+  exerciseType   String
+  durationMin    Int
+  caloriesBurned Float
+  source         ExerciseSource @default(MANUAL)
+  createdAt      DateTime       @default(now())
+  user           User           @relation(fields: [userId], references: [id])
+
+  @@index([userId, dateTime])
+}
+
+model WeightLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  date      DateTime
+  weightKg  Float
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+model HabitGoalItem {
+  id          Int       @id @default(autoincrement())
+  habitGoalId Int
+  habitId     Int
+  targetCount Int
+  weight      Float     @default(1)
+  goal        HabitGoal @relation(fields: [habitGoalId], references: [id])
+  habit       Habit     @relation(fields: [habitId], references: [id])
+
+  @@index([habitGoalId])
+  @@index([habitId])
+}
 
 enum Gender {
   MALE
@@ -83,388 +436,4 @@ enum HabitTimeOfDay {
   ANY
   DAY
   NIGHT
-}
-
-
-// MODELS
-
-model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  passwordHash  String
-  name          String
-  age           Int?
-  heightCm      Float?
-  weightKg      Float?
-  gender        Gender?
-  activityLevel ActivityLevel? @default(SEDENTARY)
-  goalType      GoalType?      @default(MAINTAIN)
-  calorieGoal   Int? // user override
-  proteinGoalG  Float?
-  carbsGoalG    Float?
-  fatGoalG      Float?
-  waterGoalMl   Int?           @default(2000)
-  unitsMetric   Boolean        @default(true)
-
-  habits          Habit[]
-  habitGoals      HabitGoal[]
-  journalEntries  JournalEntry[]
-  userFoodEntries UserFoodEntry[]
-  customFoods     CustomFood[]
-  recipes         Recipe[]
-  waterLogs       WaterLog[]
-  exerciseLogs    ExerciseLog[]
-  weightLogs      WeightLog[]
-  meals           Meal[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Habit {
-  id             Int           @id @default(autoincrement())
-  user           User          @relation(fields: [userId], references: [id])
-  userId         Int
-  name           String
-  description    String?
-  habitType      HabitType
-  frequencyType  FrequencyType
-
-  daysOfWeek   String?  // e.g. "MON,TUE,FRI" for weekly
-  dayOfMonth   Int?     // for monthly (1-31)
-  yearlyMonth  Int?     // for yearly (1-12)
-  yearlyDay    Int?     // for yearly (1-31)
-
-  scheduleDates HabitScheduleDate[]
-
-  targetValue    Float?
-  timesPerPeriod Int?
-  startDate      DateTime
-  endDate        DateTime?
-  category       String?
-  color          String?
-  icon           String?
-  isArchived     Boolean       @default(false)
-  streakGrace    Int?          @default(0)
-
-  // NEW
-  sortOrder      Int           @default(0)
-  timeOfDay      HabitTimeOfDay @default(ANY)
-
-  logs         HabitLog[]
-  goals        HabitGoal[]
-  journalLinks JournalEntryHabit[]
-  HabitGoalItem HabitGoalItem[]
-
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  @@index([userId, isArchived])
-  @@index([userId, sortOrder])
-}
-
-model HabitLog {
-  id        Int         @id @default(autoincrement())
-  habit     Habit       @relation(fields: [habitId], references: [id])
-  habitId   Int
-  date      DateTime
-  status    HabitStatus
-  value     Float?
-  notes     String?
-  createdAt DateTime    @default(now())
-
-  @@index([habitId, date])
-}
-
-model HabitGoal {
-  id              Int       @id @default(autoincrement())
-  userId          Int
-  habitId         Int?
-  goalScope       GoalScope
-  startDate       DateTime
-  endDate         DateTime
-  target          Int // e.g. number of completions
-  description     String?
-  currentProgress Int       @default(0)
-  createdAt       DateTime  @default(now())
-
-  user  User   @relation(fields: [userId], references: [id])
-  habit Habit? @relation(fields: [habitId], references: [id])
-
-  items HabitGoalItem[]
-
-  @@index([userId])
-  @@index([habitId])
-}
-
-model HabitScheduleDate {
-  id      Int      @id @default(autoincrement())
-  habitId Int
-  date    DateTime
-
-  habit Habit @relation(fields: [habitId], references: [id])
-
-  @@index([habitId, date])
-}
-
-model JournalEntry {
-  id      Int      @id @default(autoincrement())
-  user    User     @relation(fields: [userId], references: [id])
-  userId  Int
-  date    DateTime
-  title   String
-  content String
-  tags    String? // comma-separated tags
-
-  habitLinks JournalEntryHabit[]
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, date])
-}
-
-model JournalEntryHabit {
-  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id])
-  journalEntryId Int
-
-  habit   Habit @relation(fields: [habitId], references: [id])
-  habitId Int
-
-  @@id([journalEntryId, habitId])
-}
-
-// FOOD DATABASE
-
-model FoodItem {
-  id               Int     @id @default(autoincrement())
-  name             String
-  category         String?
-  baseServingSizeG Float   @default(100)
-  calories         Float
-  protein          Float   @default(0)
-  carbs            Float   @default(0)
-  fat              Float   @default(0)
-  fiber            Float   @default(0)
-  sugar            Float   @default(0)
-  sodium           Float   @default(0)
-  vitaminC         Float   @default(0)
-  iron             Float   @default(0)
-  isVerified       Boolean @default(false)
-  source           String? // e.g. USDA, Manual
-
-  userEntries       UserFoodEntry[]
-  recipeIngredients RecipeIngredient[]
-  mealItems         MealItem[] // <-- add this
-
-  @@index([name])
-  @@index([category])
-}
-
-model BrandedFoodItem {
-  id           Int     @id @default(autoincrement())
-  brandName    String
-  productName  String
-  barcode      String  @unique
-  servingSizeG Float   @default(100)
-  calories     Float
-  protein      Float   @default(0)
-  carbs        Float   @default(0)
-  fat          Float   @default(0)
-  fiber        Float   @default(0)
-  sugar        Float   @default(0)
-  sodium       Float   @default(0)
-  isVerified   Boolean @default(false)
-  source       String?
-
-  userEntries       UserFoodEntry[]
-  recipeIngredients RecipeIngredient[]
-  mealItems         MealItem[] // <-- add this
-
-  @@index([brandName])
-  @@index([productName])
-}
-
-model CustomFood {
-  id                    Int     @id @default(autoincrement())
-  user                  User    @relation(fields: [userId], references: [id])
-  userId                Int
-  name                  String
-  servingSizeDesc       String?
-  baseServingSizeAmount Float   @default(100)
-  baseServingSizeUnit   Unit    @default(G)
-  calories              Float
-  protein               Float   @default(0)
-  carbs                 Float   @default(0)
-  fat                   Float   @default(0)
-  fiber                 Float   @default(0)
-  sugar                 Float   @default(0)
-  sodium                Float   @default(0)
-
-  userEntries       UserFoodEntry[]
-  recipeIngredients RecipeIngredient[]
-  mealItems         MealItem[] // <-- add this
-
-  @@index([userId])
-}
-
-model Recipe {
-  id               Int     @id @default(autoincrement())
-  user             User    @relation(fields: [userId], references: [id])
-  userId           Int
-  name             String
-  description      String?
-  instructions     String?
-  numberOfServings Int     @default(1)
-  caloriesPerServ  Float   @default(0)
-  proteinPerServ   Float   @default(0)
-  carbsPerServ     Float   @default(0)
-  fatPerServ       Float   @default(0)
-
-  ingredients RecipeIngredient[]
-  userEntries UserFoodEntry[]
-  mealItems   MealItem[] // <-- add this
-
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-}
-
-model RecipeIngredient {
-  id       Int    @id @default(autoincrement())
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
-  recipeId Int
-
-  foodItem          FoodItem?        @relation(fields: [foodItemId], references: [id])
-  foodItemId        Int?
-  brandedFoodItem   BrandedFoodItem? @relation(fields: [brandedFoodItemId], references: [id])
-  brandedFoodItemId Int?
-  customFood        CustomFood?      @relation(fields: [customFoodId], references: [id])
-  customFoodId      Int?
-
-  quantity Float
-  unit     Unit
-
-  @@index([recipeId])
-}
-
-// USER FOOD ENTRIES
-
-model UserFoodEntry {
-  id       Int      @id @default(autoincrement())
-  user     User     @relation(fields: [userId], references: [id])
-  userId   Int
-  dateTime DateTime
-  mealType MealType
-
-  foodItem          FoodItem?        @relation(fields: [foodItemId], references: [id])
-  foodItemId        Int?
-  brandedFoodItem   BrandedFoodItem? @relation(fields: [brandedFoodItemId], references: [id])
-  brandedFoodItemId Int?
-  customFood        CustomFood?      @relation(fields: [customFoodId], references: [id])
-  customFoodId      Int?
-  recipe            Recipe?          @relation(fields: [recipeId], references: [id])
-  recipeId          Int?
-
-  quantity Float
-  unit     Unit
-
-  calories Float @default(0)
-  protein  Float @default(0)
-  carbs    Float @default(0)
-  fat      Float @default(0)
-  fiber    Float @default(0)
-  sugar    Float @default(0)
-  sodium   Float @default(0)
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, dateTime])
-}
-
-// SAVED MEALS
-
-model Meal {
-  id          Int     @id @default(autoincrement())
-  user        User    @relation(fields: [userId], references: [id])
-  userId      Int
-  name        String
-  description String?
-
-  items MealItem[]
-
-  createdAt DateTime @default(now())
-}
-
-model MealItem {
-  id     Int  @id @default(autoincrement())
-  meal   Meal @relation(fields: [mealId], references: [id])
-  mealId Int
-
-  foodItem          FoodItem?        @relation(fields: [foodItemId], references: [id])
-  foodItemId        Int?
-  brandedFoodItem   BrandedFoodItem? @relation(fields: [brandedFoodItemId], references: [id])
-  brandedFoodItemId Int?
-  customFood        CustomFood?      @relation(fields: [customFoodId], references: [id])
-  customFoodId      Int?
-  recipe            Recipe?          @relation(fields: [recipeId], references: [id])
-  recipeId          Int?
-
-  quantity Float
-  unit     Unit
-}
-
-// WATER / EXERCISE / WEIGHT
-
-model WaterLog {
-  id       Int      @id @default(autoincrement())
-  user     User     @relation(fields: [userId], references: [id])
-  userId   Int
-  dateTime DateTime
-  amount   Float
-  unit     Unit     @default(ML)
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, dateTime])
-}
-
-model ExerciseLog {
-  id             Int            @id @default(autoincrement())
-  user           User           @relation(fields: [userId], references: [id])
-  userId         Int
-  dateTime       DateTime
-  exerciseType   String
-  durationMin    Int
-  caloriesBurned Float
-  source         ExerciseSource @default(MANUAL)
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, dateTime])
-}
-
-model WeightLog {
-  id       Int      @id @default(autoincrement())
-  user     User     @relation(fields: [userId], references: [id])
-  userId   Int
-  date     DateTime
-  weightKg Float
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, date])
-}
-
-model HabitGoalItem {
-  id          Int   @id @default(autoincrement())
-  habitGoalId Int
-  habitId     Int
-  targetCount Int
-  weight      Float @default(1)
-
-  goal  HabitGoal @relation(fields: [habitGoalId], references: [id])
-  habit Habit     @relation(fields: [habitId], references: [id])
-
-  @@index([habitGoalId])
-  @@index([habitId])
 }
