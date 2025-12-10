@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `Habit` ADD COLUMN `timeOfDay` ENUM('ANY', 'DAY', 'NIGHT') NOT NULL DEFAULT 'ANY';
