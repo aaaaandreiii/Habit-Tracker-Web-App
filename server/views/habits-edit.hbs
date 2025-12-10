@@ -92,12 +92,127 @@
 
       <div>
         <label class="block mb-1">Frequency</label>
-        <select name="frequencyType" class="w-full px-2 py-1 rounded border">
-          <option value="DAILY" {{#if (eq habit.frequencyType "DAILY")}}selected{{/if}}>Daily</option>
-          <option value="WEEKLY" {{#if (eq habit.frequencyType "WEEKLY")}}selected{{/if}}>Weekly</option>
+        <select name="frequencyType" class="w-full px-2 py-1 rounded border" id="habit-frequency">
+          <option value="DAILY"   {{#if (eq habit.frequencyType "DAILY")}}selected{{/if}}>Daily</option>
+          <option value="WEEKLY"  {{#if (eq habit.frequencyType "WEEKLY")}}selected{{/if}}>Weekly</option>
           <option value="MONTHLY" {{#if (eq habit.frequencyType "MONTHLY")}}selected{{/if}}>Monthly</option>
-          <option value="CUSTOM" {{#if (eq habit.frequencyType "CUSTOM")}}selected{{/if}}>Custom</option>
+          <option value="YEARLY"  {{#if (eq habit.frequencyType "YEARLY")}}selected{{/if}}>Yearly</option>
+          <option value="CUSTOM"  {{#if (eq habit.frequencyType "CUSTOM")}}selected{{/if}}>Custom</option>
         </select>
+      </div>
+
+            {{!-- WEEKLY --}}
+      <div data-freq="WEEKLY" class="freq-fields space-y-1 hidden">
+        <label class="block mb-1">Weekly on</label>
+        <div class="grid grid-cols-4 gap-1 text-[11px]">
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="daysOfWeek" value="SUN" {{#if (includesDay habit.daysOfWeek "SUN")}}checked{{/if}}>
+            <span>Sun</span>
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="daysOfWeek" value="MON" {{#if (includesDay habit.daysOfWeek "MON")}}checked{{/if}}>
+            <span>Mon</span>
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="daysOfWeek" value="TUE" {{#if (includesDay habit.daysOfWeek "TUE")}}checked{{/if}}>
+            <span>Tue</span>
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="daysOfWeek" value="WED" {{#if (includesDay habit.daysOfWeek "WED")}}checked{{/if}}>
+            <span>Wed</span>
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="daysOfWeek" value="THU" {{#if (includesDay habit.daysOfWeek "THU")}}checked{{/if}}>
+            <span>Thu</span>
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="daysOfWeek" value="FRI" {{#if (includesDay habit.daysOfWeek "FRI")}}checked{{/if}}>
+            <span>Fri</span>
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="daysOfWeek" value="SAT" {{#if (includesDay habit.daysOfWeek "SAT")}}checked{{/if}}>
+            <span>Sat</span>
+          </label>
+        </div>
+        <p class="text-[11px] text-slate-500">
+          For a once-a-week habit, usually you’ll pick exactly one day.
+        </p>
+      </div>
+
+      {{!-- MONTHLY --}}
+      <div data-freq="MONTHLY" class="freq-fields space-y-1 hidden">
+        <label class="block mb-1">Monthly on day</label>
+        <input
+          type="number"
+          name="dayOfMonth"
+          min="1"
+          max="31"
+          class="w-24 px-2 py-1 rounded border"
+          value="{{#if habit.dayOfMonth}}{{habit.dayOfMonth}}{{/if}}"
+        >
+        <p class="text-[11px] text-slate-500">
+          Example: 1 = every 1st of the month.
+        </p>
+      </div>
+
+      {{!-- YEARLY --}}
+      <div data-freq="YEARLY" class="freq-fields space-y-1 hidden">
+        <label class="block mb-1">Yearly on</label>
+        <div class="flex gap-2">
+          <input
+            type="number"
+            name="yearlyMonth"
+            min="1"
+            max="12"
+            class="w-20 px-2 py-1 rounded border"
+            placeholder="Month"
+            value="{{#if habit.yearlyMonth}}{{habit.yearlyMonth}}{{/if}}"
+          >
+          <input
+            type="number"
+            name="yearlyDay"
+            min="1"
+            max="31"
+            class="w-20 px-2 py-1 rounded border"
+            placeholder="Day"
+            value="{{#if habit.yearlyDay}}{{habit.yearlyDay}}{{/if}}"
+          >
+        </div>
+        <p class="text-[11px] text-slate-500">
+          Example: 1 / 1 = every January 1st.
+        </p>
+      </div>
+
+      {{!-- CUSTOM --}}
+      <div data-freq="CUSTOM" class="freq-fields space-y-1 hidden">
+        <label class="block mb-1">Custom dates</label>
+        <p class="text-[11px] text-slate-500">
+          Pick specific dates when this habit should appear.
+        </p>
+        <div id="custom-dates-container" class="space-y-1">
+          {{#if habit.scheduleDates}}
+            {{#each habit.scheduleDates}}
+              <input
+                type="date"
+                name="scheduleDates"
+                class="px-2 py-1 rounded border w-48"
+                value="{{dateInput this.date}}"
+              >
+            {{/each}}
+          {{else}}
+            <input
+              type="date"
+              name="scheduleDates"
+              class="px-2 py-1 rounded border w-48"
+            >
+          {{/if}}
+        </div>
+        <button
+          type="button"
+          id="add-custom-date"
+          class="text-[11px] text-emerald-500 hover:underline mt-1">
+          + Add another date
+        </button>
       </div>
 
       <div>
@@ -182,3 +297,5 @@
     </div>
   </form>
 </section>
+
+<script src="/js/habits-edit.js"></script>
