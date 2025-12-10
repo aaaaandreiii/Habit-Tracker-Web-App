@@ -1,20 +1,22 @@
-import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
-import { prisma } from '../lib/prisma';
+import { Router } from "express";
+import { requireAuth } from "../middleware/auth";
+import { prisma } from "../lib/prisma";
 
 const router = Router();
 
-router.get('/settings', requireAuth, async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.currentUser!.id } });
-  res.render('profile-settings', {
-    layout: 'main',
-    title: 'Profile & Goals',
+router.get("/settings", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.currentUser!.id },
+  });
+  res.render("profile-settings", {
+    layout: "main",
+    title: "Profile & Goals",
     user: req.currentUser,
     profile: user,
   });
 });
 
-router.post('/settings', requireAuth, async (req, res) => {
+router.post("/settings", requireAuth, async (req, res) => {
   const {
     name,
     age,
@@ -46,11 +48,11 @@ router.post('/settings', requireAuth, async (req, res) => {
       carbsGoalG: carbsGoalG ? Number(carbsGoalG) : null,
       fatGoalG: fatGoalG ? Number(fatGoalG) : null,
       waterGoalMl: waterGoalMl ? Number(waterGoalMl) : null,
-      unitsMetric: unitsMetric === 'on',
+      unitsMetric: unitsMetric === "on",
     },
   });
 
-  res.redirect('/profile/settings');
+  res.redirect("/profile/settings");
 });
 
 export default router;

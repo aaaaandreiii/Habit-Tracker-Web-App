@@ -1,18 +1,18 @@
-import { prisma } from '../lib/prisma';
-import { ActivityLevel, GoalType, Unit } from '@prisma/client';
-import { startOfDay } from 'date-fns';
+import { prisma } from "../lib/prisma";
+import { ActivityLevel, GoalType, Unit } from "@prisma/client";
+import { startOfDay } from "date-fns";
 
 function activityMultiplier(level: ActivityLevel | null): number {
   switch (level) {
-    case 'SEDENTARY':
+    case "SEDENTARY":
       return 1.2;
-    case 'LIGHT':
+    case "LIGHT":
       return 1.375;
-    case 'MODERATE':
+    case "MODERATE":
       return 1.55;
-    case 'ACTIVE':
+    case "ACTIVE":
       return 1.725;
-    case 'VERY_ACTIVE':
+    case "VERY_ACTIVE":
       return 1.9;
     default:
       return 1.2;
@@ -31,19 +31,22 @@ export function calculateCalorieGoal(params: {
   const weight = params.weightKg ?? 70;
   const height = params.heightCm ?? 170;
   const age = params.age ?? 30;
-  const s = params.gender === 'FEMALE' ? -161 : 5;
+  const s = params.gender === "FEMALE" ? -161 : 5;
 
   const bmr = 10 * weight + 6.25 * height - 5 * age + s;
   let tdee = bmr * activityMultiplier(params.activityLevel);
 
-  if (params.goalType === 'LOSS') tdee -= 400;
-  else if (params.goalType === 'GAIN') tdee += 300;
+  if (params.goalType === "LOSS") tdee -= 400;
+  else if (params.goalType === "GAIN") tdee += 300;
 
   return Math.round(tdee);
 }
 
 /** Daily nutrition summary for dashboard */
-export async function getDailyNutritionSummary(userId: number, date = new Date()) {
+export async function getDailyNutritionSummary(
+  userId: number,
+  date = new Date(),
+) {
   const start = startOfDay(date);
   const end = new Date(start.getTime() + 86400000);
 
@@ -65,7 +68,10 @@ export async function getDailyNutritionSummary(userId: number, date = new Date()
   const sugar = foods.reduce((sum, f) => sum + f.sugar, 0);
   const sodium = foods.reduce((sum, f) => sum + f.sodium, 0);
 
-  const caloriesBurned = exercises.reduce((sum, e) => sum + e.caloriesBurned, 0);
+  const caloriesBurned = exercises.reduce(
+    (sum, e) => sum + e.caloriesBurned,
+    0,
+  );
 
   const goal =
     user?.calorieGoal ??
@@ -98,13 +104,21 @@ export async function getDailyNutritionSummary(userId: number, date = new Date()
 
 /** Utility to compute per-entry macros based on base nutrition. */
 export function scaleNutrition(
-  base: { calories: number; protein: number; carbs: number; fat: number; fiber?: number; sugar?: number; sodium?: number },
+  base: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+    sugar?: number;
+    sodium?: number;
+  },
   baseAmount: number,
   quantity: number,
-  unit: Unit
+  unit: Unit,
 ) {
   // Simplified: treat unit as grams equivalent; for real app add unit conversion table.
-  const factor = (quantity / baseAmount) || 0;
+  const factor = quantity / baseAmount || 0;
   return {
     calories: base.calories * factor,
     protein: base.protein * factor,

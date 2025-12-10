@@ -1,6 +1,13 @@
-import { prisma } from '../lib/prisma';
-import { HabitStatus } from '@prisma/client';
-import { startOfDay, subDays, isSameDay, getDay, getDate, getMonth } from 'date-fns';
+import { prisma } from "../lib/prisma";
+import { HabitStatus } from "@prisma/client";
+import {
+  startOfDay,
+  subDays,
+  isSameDay,
+  getDay,
+  getDate,
+  getMonth,
+} from "date-fns";
 
 export async function getTodayHabits(userId: number, date = new Date()) {
   const today = startOfDay(date);
@@ -12,50 +19,49 @@ export async function getTodayHabits(userId: number, date = new Date()) {
     },
     include: {
       logs: {
-        where: { date: { gte: today, lt: new Date(today.getTime() + 86400000) } },
+        where: {
+          date: { gte: today, lt: new Date(today.getTime() + 86400000) },
+        },
       },
       scheduleDates: true,
     },
-    orderBy: { sortOrder: 'asc' }, // if you added sortOrder
+    orderBy: { sortOrder: "asc" }, // if you added sortOrder
   });
 
   return habits.filter((habit) => isHabitScheduledForDate(habit as any, today));
 }
 
-function isHabitScheduledForDate(
-  habit: any,
-  date: Date
-): boolean {
+function isHabitScheduledForDate(habit: any, date: Date): boolean {
   const dow = getDay(date); // 0 = Sunday
   const dom = getDate(date);
   const month = getMonth(date) + 1; // 1-12
 
   switch (habit.frequencyType) {
-    case 'DAILY':
+    case "DAILY":
       return true;
 
-    case 'WEEKLY': {
+    case "WEEKLY": {
       if (!habit.daysOfWeek) return true; // treat as every day of week
       const tokens = String(habit.daysOfWeek)
-        .split(',')
+        .split(",")
         .map((s: string) => s.trim().toUpperCase())
         .filter(Boolean);
-      const map = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const map = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
       const todayToken = map[dow];
       return tokens.includes(todayToken);
     }
 
-    case 'MONTHLY': {
+    case "MONTHLY": {
       if (!habit.dayOfMonth) return true;
       return dom === habit.dayOfMonth;
     }
 
-    case 'YEARLY': {
+    case "YEARLY": {
       if (!habit.yearlyMonth || !habit.yearlyDay) return true;
       return month === habit.yearlyMonth && dom === habit.yearlyDay;
     }
 
-    case 'CUSTOM': {
+    case "CUSTOM": {
       if (!habit.scheduleDates || !habit.scheduleDates.length) return true;
       return habit.scheduleDates.some((s: any) => isSameDay(s.date, date));
     }
@@ -86,7 +92,10 @@ export async function logHabit(params: {
   let log;
 
   if (existing) {
-    if (existing.status !== HabitStatus.COMPLETED && params.status === HabitStatus.COMPLETED) {
+    if (
+      existing.status !== HabitStatus.COMPLETED &&
+      params.status === HabitStatus.COMPLETED
+    ) {
       delta = 1;
     } else if (
       existing.status === HabitStatus.COMPLETED &&
@@ -135,7 +144,7 @@ export async function logHabit(params: {
 export async function getHabitStreak(habitId: number) {
   const logs = await prisma.habitLog.findMany({
     where: { habitId },
-    orderBy: { date: 'desc' },
+    orderBy: { date: "desc" },
   });
 
   let currentStreak = 0;

@@ -1,21 +1,24 @@
 // server/src/routes/nutrition.ts
-import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
-import { prisma } from '../lib/prisma';
-import { MealType, Unit } from '@prisma/client';
-import { startOfDay, format, parseISO, addDays, subDays } from 'date-fns';
-import { getDailyNutritionSummary, scaleNutrition } from '../services/nutritionService';
+import { Router } from "express";
+import { requireAuth } from "../middleware/auth";
+import { prisma } from "../lib/prisma";
+import { MealType, Unit } from "@prisma/client";
+import { startOfDay, format, parseISO, addDays, subDays } from "date-fns";
+import {
+  getDailyNutritionSummary,
+  scaleNutrition,
+} from "../services/nutritionService";
 
 const router = Router();
 
 /* Daily log view */
-router.get('/daily', requireAuth, async (req, res) => {
+router.get("/daily", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const dateParam = req.query.date;
 
   let currentDate = new Date();
 
-  if (typeof dateParam === 'string' && dateParam.trim() !== '') {
+  if (typeof dateParam === "string" && dateParam.trim() !== "") {
     try {
       const parsed = parseISO(dateParam);
       if (!isNaN(parsed.getTime())) {
@@ -32,8 +35,13 @@ router.get('/daily', requireAuth, async (req, res) => {
   const [entries, summary, waterToday, userProfile] = await Promise.all([
     prisma.userFoodEntry.findMany({
       where: { userId, dateTime: { gte: start, lt: end } },
-      include: { foodItem: true, brandedFoodItem: true, customFood: true, recipe: true },
-      orderBy: { dateTime: 'asc' },
+      include: {
+        foodItem: true,
+        brandedFoodItem: true,
+        customFood: true,
+        recipe: true,
+      },
+      orderBy: { dateTime: "asc" },
     }),
     getDailyNutritionSummary(userId, currentDate),
     prisma.waterLog.aggregate({
@@ -55,9 +63,9 @@ router.get('/daily', requireAuth, async (req, res) => {
   const prevDate = subDays(currentDate, 1);
   const nextDate = addDays(currentDate, 1);
 
-  res.render('nutrition-daily', {
-    layout: 'main',
-    title: 'Daily Nutrition',
+  res.render("nutrition-daily", {
+    layout: "main",
+    title: "Daily Nutrition",
     user: req.currentUser,
     entries,
     summary,
@@ -71,22 +79,22 @@ router.get('/daily', requireAuth, async (req, res) => {
 });
 
 /* Progress / trends view (weight + calories trend) */
-router.get('/progress', requireAuth, async (req, res) => {
+router.get("/progress", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const summary = await getDailyNutritionSummary(userId, new Date());
 
-  res.render('nutrition-progress', {
-    layout: 'main',
-    title: 'Progress',
+  res.render("nutrition-progress", {
+    layout: "main",
+    title: "Progress",
     user: req.currentUser,
     summary,
   });
 });
 
 /* Food search (hbs view or JSON) */
-router.get('/foods/search', requireAuth, async (req, res) => {
+router.get("/foods/search", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
-  const q = (req.query.q as string) || '';
+  const q = (req.query.q as string) || "";
   const limit = 20;
 
   const [generic, branded, customFoods, recentEntries] = await Promise.all([
@@ -114,7 +122,7 @@ router.get('/foods/search', requireAuth, async (req, res) => {
     }),
     prisma.userFoodEntry.findMany({
       where: { userId },
-      orderBy: { dateTime: 'desc' },
+      orderBy: { dateTime: "desc" },
       take: 10,
       include: {
         foodItem: true,
@@ -125,13 +133,13 @@ router.get('/foods/search', requireAuth, async (req, res) => {
     }),
   ]);
 
-  if (req.headers.accept?.includes('application/json')) {
+  if (req.headers.accept?.includes("application/json")) {
     return res.json({ generic, branded, customFoods, recentEntries });
   }
 
-  res.render('nutrition-search', {
-    layout: 'main',
-    title: 'Search Foods',
+  res.render("nutrition-search", {
+    layout: "main",
+    title: "Search Foods",
     user: req.currentUser,
     q,
     generic,
@@ -142,7 +150,7 @@ router.get('/foods/search', requireAuth, async (req, res) => {
 });
 
 /* Create a custom food from the search page */
-router.post('/foods/custom', requireAuth, async (req, res) => {
+router.post("/foods/custom", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const {
     name,
@@ -159,7 +167,7 @@ router.post('/foods/custom', requireAuth, async (req, res) => {
   } = req.body;
 
   if (!name || !calories) {
-    return res.redirect('/nutrition/foods/search');
+    return res.redirect("/nutrition/foods/search");
   }
 
   await prisma.customFood.create({
@@ -185,9 +193,11 @@ router.post('/foods/custom', requireAuth, async (req, res) => {
 });
 
 /* Barcode lookup (mobile hook) */
-router.get('/foods/barcode/:code', requireAuth, async (req, res) => {
+router.get("/foods/barcode/:code", requireAuth, async (req, res) => {
   const { code } = req.params;
-  const food = await prisma.brandedFoodItem.findUnique({ where: { barcode: code } });
+  const food = await prisma.brandedFoodItem.findUnique({
+    where: { barcode: code },
+  });
   if (!food) {
     return res.status(404).json({ found: false });
   }
@@ -195,7 +205,7 @@ router.get('/foods/barcode/:code', requireAuth, async (req, res) => {
 });
 
 /* Log a food entry */
-router.post('/log', requireAuth, async (req, res) => {
+router.post("/log", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const {
     mealType,
@@ -213,7 +223,9 @@ router.post('/log', requireAuth, async (req, res) => {
   let baseAmount = 100;
 
   if (foodItemId) {
-    baseFood = await prisma.foodItem.findUnique({ where: { id: Number(foodItemId) } });
+    baseFood = await prisma.foodItem.findUnique({
+      where: { id: Number(foodItemId) },
+    });
     baseAmount = baseFood.baseServingSizeG;
   } else if (brandedFoodItemId) {
     baseFood = await prisma.brandedFoodItem.findUnique({
@@ -221,15 +233,19 @@ router.post('/log', requireAuth, async (req, res) => {
     });
     baseAmount = baseFood.servingSizeG;
   } else if (customFoodId) {
-    baseFood = await prisma.customFood.findUnique({ where: { id: Number(customFoodId) } });
+    baseFood = await prisma.customFood.findUnique({
+      where: { id: Number(customFoodId) },
+    });
     baseAmount = baseFood.baseServingSizeAmount;
   } else if (recipeId) {
-    baseFood = await prisma.recipe.findUnique({ where: { id: Number(recipeId) } });
+    baseFood = await prisma.recipe.findUnique({
+      where: { id: Number(recipeId) },
+    });
     baseAmount = 1; // per serving
   }
 
   const qty = Number(quantity || 1);
-  const u = (unit as Unit) || 'G';
+  const u = (unit as Unit) || "G";
 
   const scaled = scaleNutrition(
     {
@@ -243,7 +259,7 @@ router.post('/log', requireAuth, async (req, res) => {
     },
     baseAmount,
     qty,
-    u
+    u,
   );
 
   await prisma.userFoodEntry.create({
@@ -267,29 +283,29 @@ router.post('/log', requireAuth, async (req, res) => {
     },
   });
 
-  res.redirect('/nutrition/daily');
+  res.redirect("/nutrition/daily");
 });
 
 /* Water logging (quick buttons) */
-router.post('/water', requireAuth, async (req, res) => {
+router.post("/water", requireAuth, async (req, res) => {
   const { amount, unit } = req.body;
   await prisma.waterLog.create({
     data: {
       userId: req.currentUser!.id,
       amount: Number(amount),
-      unit: unit || 'ML',
+      unit: unit || "ML",
       dateTime: new Date(),
     },
   });
 
-  if (req.headers.accept?.includes('application/json')) {
+  if (req.headers.accept?.includes("application/json")) {
     return res.json({ success: true });
   }
-  res.redirect('/dashboard');
+  res.redirect("/dashboard");
 });
 
 /* Exercise logging (manual) */
-router.post('/exercise', requireAuth, async (req, res) => {
+router.post("/exercise", requireAuth, async (req, res) => {
   const { exerciseType, durationMin, caloriesBurned } = req.body;
   await prisma.exerciseLog.create({
     data: {
@@ -298,14 +314,14 @@ router.post('/exercise', requireAuth, async (req, res) => {
       durationMin: Number(durationMin),
       caloriesBurned: Number(caloriesBurned),
       dateTime: new Date(),
-      source: 'MANUAL',
+      source: "MANUAL",
     },
   });
-  res.redirect('/dashboard');
+  res.redirect("/dashboard");
 });
 
 /* Weight logging */
-router.post('/weight', requireAuth, async (req, res) => {
+router.post("/weight", requireAuth, async (req, res) => {
   const { weightKg, date } = req.body;
   await prisma.weightLog.create({
     data: {
@@ -314,11 +330,11 @@ router.post('/weight', requireAuth, async (req, res) => {
       date: date ? new Date(date) : new Date(),
     },
   });
-  res.redirect('/nutrition/progress');
+  res.redirect("/nutrition/progress");
 });
 
 /* Calorie & weight trends for Chart.js */
-router.get('/api/trends', requireAuth, async (req, res) => {
+router.get("/api/trends", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const now = new Date();
   const from = new Date(now.getTime() - 29 * 86400000);
@@ -326,12 +342,12 @@ router.get('/api/trends', requireAuth, async (req, res) => {
   const entriesRaw = await prisma.userFoodEntry.findMany({
     where: { userId, dateTime: { gte: from, lte: now } },
     select: { dateTime: true, calories: true },
-    orderBy: { dateTime: 'asc' },
+    orderBy: { dateTime: "asc" },
   });
 
   const byDay: Record<string, number> = {};
   for (const e of entriesRaw) {
-    const key = format(startOfDay(e.dateTime), 'yyyy-MM-dd');
+    const key = format(startOfDay(e.dateTime), "yyyy-MM-dd");
     byDay[key] = (byDay[key] ?? 0) + e.calories;
   }
 
@@ -342,7 +358,7 @@ router.get('/api/trends', requireAuth, async (req, res) => {
 
   const weights = await prisma.weightLog.findMany({
     where: { userId, date: { gte: from, lte: now } },
-    orderBy: { date: 'asc' },
+    orderBy: { date: "asc" },
   });
 
   res.json({ entries, weights });

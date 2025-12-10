@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
-import { prisma } from '../lib/prisma';
-import { getTodayHabits, logHabit } from '../services/habitService';
-import { HabitStatus } from '@prisma/client';
+import { Router } from "express";
+import { requireAuth } from "../middleware/auth";
+import { prisma } from "../lib/prisma";
+import { getTodayHabits, logHabit } from "../services/habitService";
+import { HabitStatus } from "@prisma/client";
 import {
   parseISO,
   startOfDay,
@@ -13,18 +13,18 @@ import {
   addWeeks,
   subWeeks,
   getISOWeek,
-} from 'date-fns';
+} from "date-fns";
 
 const router = Router();
 
 /* Today view with quick logging */
-router.get('/today', requireAuth, async (req, res) => {
+router.get("/today", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const dateParam = req.query.date;
 
   let currentDate = new Date();
 
-  if (typeof dateParam === 'string' && dateParam.trim() !== '') {
+  if (typeof dateParam === "string" && dateParam.trim() !== "") {
     try {
       const parsed = parseISO(dateParam);
       if (!isNaN(parsed.getTime())) {
@@ -44,12 +44,12 @@ router.get('/today', requireAuth, async (req, res) => {
     new Set(
       habits
         .map((h) => h.category)
-        .filter((c): c is string => !!c && c.trim() !== '')
-    )
+        .filter((c): c is string => !!c && c.trim() !== ""),
+    ),
   ).sort((a, b) => a.localeCompare(b));
 
-  res.render('habits-today', {
-    layout: 'main',
+  res.render("habits-today", {
+    layout: "main",
     title: "Today's Habits",
     user: req.currentUser,
     habits,
@@ -61,16 +61,16 @@ router.get('/today', requireAuth, async (req, res) => {
 });
 
 /* Habit creation form */
-router.get('/new', requireAuth, (req, res) => {
-  res.render('habits-edit', {
-    layout: 'main',
-    title: 'New Habit',
+router.get("/new", requireAuth, (req, res) => {
+  res.render("habits-edit", {
+    layout: "main",
+    title: "New Habit",
     user: req.currentUser,
     habit: null,
   });
 });
 
-router.post('/new', requireAuth, async (req, res) => {
+router.post("/new", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const {
     name,
@@ -100,8 +100,8 @@ router.post('/new', requireAuth, async (req, res) => {
   // Normalize daysOfWeek
   let daysOfWeekStr: string | null = null;
   if (Array.isArray(daysOfWeek)) {
-    daysOfWeekStr = daysOfWeek.join(',');
-  } else if (typeof daysOfWeek === 'string' && daysOfWeek.trim() !== '') {
+    daysOfWeekStr = daysOfWeek.join(",");
+  } else if (typeof daysOfWeek === "string" && daysOfWeek.trim() !== "") {
     daysOfWeekStr = daysOfWeek;
   }
 
@@ -116,38 +116,23 @@ router.post('/new', requireAuth, async (req, res) => {
       frequencyType: freq,
       targetValue: targetValue ? Number(targetValue) : null,
       startDate: startDate ? new Date(startDate) : new Date(),
-      endDate:
-        noEndDate === 'on' || !endDate
-          ? null
-          : new Date(endDate),
+      endDate: noEndDate === "on" || !endDate ? null : new Date(endDate),
       category,
       color,
       icon,
-      timeOfDay: timeOfDay || 'ANY',
+      timeOfDay: timeOfDay || "ANY",
       sortOrder: (maxOrder._max.sortOrder ?? 0) + 1,
-      daysOfWeek: freq === 'WEEKLY' ? daysOfWeekStr : null,
+      daysOfWeek: freq === "WEEKLY" ? daysOfWeekStr : null,
       dayOfMonth:
-        freq === 'MONTHLY'
-          ? dayOfMonth
-            ? Number(dayOfMonth)
-            : null
-          : null,
+        freq === "MONTHLY" ? (dayOfMonth ? Number(dayOfMonth) : null) : null,
       yearlyMonth:
-        freq === 'YEARLY'
-          ? yearlyMonth
-            ? Number(yearlyMonth)
-            : null
-          : null,
+        freq === "YEARLY" ? (yearlyMonth ? Number(yearlyMonth) : null) : null,
       yearlyDay:
-        freq === 'YEARLY'
-          ? yearlyDay
-            ? Number(yearlyDay)
-            : null
-          : null,
+        freq === "YEARLY" ? (yearlyDay ? Number(yearlyDay) : null) : null,
     },
   });
 
-  if (freq === 'CUSTOM') {
+  if (freq === "CUSTOM") {
     let dates = scheduleDates;
     if (!Array.isArray(dates)) {
       dates = dates ? [dates] : [];
@@ -155,7 +140,7 @@ router.post('/new', requireAuth, async (req, res) => {
 
     await prisma.habitScheduleDate.createMany({
       data: (dates as string[])
-        .filter((d) => d && d.trim() !== '')
+        .filter((d) => d && d.trim() !== "")
         .map((d) => ({
           habitId: habit.id,
           date: new Date(d),
@@ -163,11 +148,11 @@ router.post('/new', requireAuth, async (req, res) => {
     });
   }
 
-  res.redirect('/habits/today');
+  res.redirect("/habits/today");
 });
 
 /* Edit habit form */
-router.get('/:id/edit', requireAuth, async (req, res) => {
+router.get("/:id/edit", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const habitId = Number(req.params.id);
 
@@ -179,19 +164,19 @@ router.get('/:id/edit', requireAuth, async (req, res) => {
   });
 
   if (!habit) {
-    return res.redirect('/habits/today');
+    return res.redirect("/habits/today");
   }
 
-  res.render('habits-edit', {
-    layout: 'main',
-    title: 'Edit Habit',
+  res.render("habits-edit", {
+    layout: "main",
+    title: "Edit Habit",
     user: req.currentUser,
     habit,
   });
 });
 
 /* Edit habit */
-router.post('/:id/edit', requireAuth, async (req, res) => {
+router.post("/:id/edit", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const habitId = Number(req.params.id);
 
@@ -219,8 +204,8 @@ router.post('/:id/edit', requireAuth, async (req, res) => {
   // Normalize daysOfWeek
   let daysOfWeekStr: string | null = null;
   if (Array.isArray(daysOfWeek)) {
-    daysOfWeekStr = daysOfWeek.join(',');
-  } else if (typeof daysOfWeek === 'string' && daysOfWeek.trim() !== '') {
+    daysOfWeekStr = daysOfWeek.join(",");
+  } else if (typeof daysOfWeek === "string" && daysOfWeek.trim() !== "") {
     daysOfWeekStr = daysOfWeek;
   }
 
@@ -236,41 +221,25 @@ router.post('/:id/edit', requireAuth, async (req, res) => {
       targetValue: targetValue ? Number(targetValue) : null,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate:
-        noEndDate === 'on'
-          ? null
-          : endDate
-          ? new Date(endDate)
-          : undefined,
+        noEndDate === "on" ? null : endDate ? new Date(endDate) : undefined,
       category,
       color,
       icon,
       isArchived: Boolean(isArchived),
-      timeOfDay: timeOfDay || 'ANY',
+      timeOfDay: timeOfDay || "ANY",
       // frequency-specific fields
-      daysOfWeek: freq === 'WEEKLY' ? daysOfWeekStr : null,
+      daysOfWeek: freq === "WEEKLY" ? daysOfWeekStr : null,
       dayOfMonth:
-        freq === 'MONTHLY'
-          ? dayOfMonth
-            ? Number(dayOfMonth)
-            : null
-          : null,
+        freq === "MONTHLY" ? (dayOfMonth ? Number(dayOfMonth) : null) : null,
       yearlyMonth:
-        freq === 'YEARLY'
-          ? yearlyMonth
-            ? Number(yearlyMonth)
-            : null
-          : null,
+        freq === "YEARLY" ? (yearlyMonth ? Number(yearlyMonth) : null) : null,
       yearlyDay:
-        freq === 'YEARLY'
-          ? yearlyDay
-            ? Number(yearlyDay)
-            : null
-          : null,
+        freq === "YEARLY" ? (yearlyDay ? Number(yearlyDay) : null) : null,
     },
   });
 
   // Update custom schedule dates (only for CUSTOM)
-  if (freq === 'CUSTOM') {
+  if (freq === "CUSTOM") {
     let dates = scheduleDates;
     if (!Array.isArray(dates)) {
       dates = dates ? [dates] : [];
@@ -280,7 +249,7 @@ router.post('/:id/edit', requireAuth, async (req, res) => {
       prisma.habitScheduleDate.deleteMany({ where: { habitId } }),
       prisma.habitScheduleDate.createMany({
         data: (dates as string[])
-          .filter((d) => d && d.trim() !== '')
+          .filter((d) => d && d.trim() !== "")
           .map((d) => ({
             habitId,
             date: new Date(d),
@@ -292,11 +261,11 @@ router.post('/:id/edit', requireAuth, async (req, res) => {
     await prisma.habitScheduleDate.deleteMany({ where: { habitId } });
   }
 
-  res.redirect('/habits/today');
+  res.redirect("/habits/today");
 });
 
 /* Delete habit (hard delete) */
-router.post('/:id/delete', requireAuth, async (req, res) => {
+router.post("/:id/delete", requireAuth, async (req, res) => {
   const habitId = Number(req.params.id);
   const userId = req.currentUser!.id;
 
@@ -305,7 +274,7 @@ router.post('/:id/delete', requireAuth, async (req, res) => {
   });
 
   if (!habit) {
-    return res.redirect('/habits/today');
+    return res.redirect("/habits/today");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -322,18 +291,18 @@ router.post('/:id/delete', requireAuth, async (req, res) => {
     await tx.habit.delete({ where: { id: habitId } });
   });
 
-  res.redirect('/habits/today');
+  res.redirect("/habits/today");
 });
 
 /* Save custom habit order (drag & drop) */
-router.post('/reorder', requireAuth, async (req, res) => {
+router.post("/reorder", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const { order } = req.body as {
     order: { habitId: number; sortOrder: number }[];
   };
 
   if (!Array.isArray(order)) {
-    return res.status(400).json({ error: 'Invalid order payload' });
+    return res.status(400).json({ error: "Invalid order payload" });
   }
 
   await prisma.$transaction(
@@ -341,21 +310,21 @@ router.post('/reorder', requireAuth, async (req, res) => {
       prisma.habit.updateMany({
         where: { id: item.habitId, userId },
         data: { sortOrder: item.sortOrder },
-      })
-    )
+      }),
+    ),
   );
 
   res.json({ success: true });
 });
 
 /* Quick log endpoint (AJAX) */
-router.post('/:id/log', requireAuth, async (req, res) => {
+router.post("/:id/log", requireAuth, async (req, res) => {
   const habitId = Number(req.params.id);
   const { status, value, notes, date } = req.body;
 
   let parsedDate: Date;
 
-  if (typeof date === 'string' && date.trim() !== '') {
+  if (typeof date === "string" && date.trim() !== "") {
     try {
       parsedDate = parseISO(date);
       if (isNaN(parsedDate.getTime())) {
@@ -381,17 +350,17 @@ router.post('/:id/log', requireAuth, async (req, res) => {
 });
 
 /* Heatmap + trends data for a single habit (still used by charts if you want) */
-router.get('/:id/logs', requireAuth, async (req, res) => {
+router.get("/:id/logs", requireAuth, async (req, res) => {
   const habitId = Number(req.params.id);
   const logs = await prisma.habitLog.findMany({
     where: { habitId, habit: { userId: req.currentUser!.id } },
-    orderBy: { date: 'asc' },
+    orderBy: { date: "asc" },
   });
   res.json(logs);
 });
 
 /* Habit Heatmap for last 30 days (all habits combined) */
-router.get('/heatmap', requireAuth, async (req, res) => {
+router.get("/heatmap", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const today = startOfDay(new Date());
   const from = subDays(today, 29);
@@ -409,7 +378,7 @@ router.get('/heatmap', requireAuth, async (req, res) => {
   const habitNamesByDate: Record<string, string[]> = {};
 
   for (const log of logs) {
-    const key = format(startOfDay(log.date), 'yyyy-MM-dd');
+    const key = format(startOfDay(log.date), "yyyy-MM-dd");
     counts[key] = (counts[key] ?? 0) + 1;
 
     const name = log.habit.name;
@@ -429,31 +398,33 @@ router.get('/heatmap', requireAuth, async (req, res) => {
 
   for (let i = 0; i < 30; i++) {
     const d = addDays(from, i);
-    const key = format(d, 'yyyy-MM-dd');
+    const key = format(d, "yyyy-MM-dd");
     days.push({
       key,
-      label: format(d, 'MMM d'),
-      day: format(d, 'd'),
+      label: format(d, "MMM d"),
+      day: format(d, "d"),
       completions: counts[key] ?? 0,
       habits: habitNamesByDate[key] ?? [],
     });
   }
 
-  res.render('habits-heatmap', {
-    layout: 'main',
-    title: 'Habit Heatmap',
+  res.render("habits-heatmap", {
+    layout: "main",
+    title: "Habit Heatmap",
     user: req.currentUser,
     heatmapDays: days,
   });
 });
 
 /* Spreadsheet-style habit matrix view (weeks × habits) */
-router.get('/matrix', requireAuth, async (req, res) => {
+router.get("/matrix", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
   const offset = Number(req.query.offset || 0); // 0 = current week
 
   const today = new Date();
-  const baseWeekStart = startOfWeek(addWeeks(today, offset), { weekStartsOn: 1 }); // Monday
+  const baseWeekStart = startOfWeek(addWeeks(today, offset), {
+    weekStartsOn: 1,
+  }); // Monday
 
   const weekStarts = [
     subWeeks(baseWeekStart, 1),
@@ -475,16 +446,13 @@ router.get('/matrix', requireAuth, async (req, res) => {
 
   const habits = await prisma.habit.findMany({
     where: { userId, isArchived: false },
-    orderBy: [
-      { sortOrder: 'asc' },
-      { id: 'asc' },
-    ],
+    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
   });
 
   if (!habits.length) {
-    return res.render('habits-matrix', {
-      layout: 'main',
-      title: 'Habit Matrix',
+    return res.render("habits-matrix", {
+      layout: "main",
+      title: "Habit Matrix",
       user: req.currentUser,
       habits: [],
       weeks: [],
@@ -508,7 +476,12 @@ router.get('/matrix', requireAuth, async (req, res) => {
     },
   });
 
-  type Day = { dateKey: string; label: string; weekday: string; weekIndex: number };
+  type Day = {
+    dateKey: string;
+    label: string;
+    weekday: string;
+    weekIndex: number;
+  };
   type WeekView = { label: string; days: Day[] };
 
   const days: Day[] = [];
@@ -519,9 +492,9 @@ router.get('/matrix', requireAuth, async (req, res) => {
     for (let i = 0; i < 7; i++) {
       const d = addDays(week.start, i);
       const day: Day = {
-        dateKey: format(d, 'yyyy-MM-dd'),
-        label: format(d, 'MMM d'),
-        weekday: format(d, 'EEE'),
+        dateKey: format(d, "yyyy-MM-dd"),
+        label: format(d, "MMM d"),
+        weekday: format(d, "EEE"),
         weekIndex,
       };
       weekDays.push(day);
@@ -536,7 +509,7 @@ router.get('/matrix', requireAuth, async (req, res) => {
   // Map logs by habit + date
   const logMap = new Map<string, (typeof logs)[number]>();
   for (const log of logs) {
-    const key = `${log.habitId}-${format(startOfDay(log.date), 'yyyy-MM-dd')}`;
+    const key = `${log.habitId}-${format(startOfDay(log.date), "yyyy-MM-dd")}`;
     logMap.set(key, log);
   }
 
@@ -544,15 +517,15 @@ router.get('/matrix', requireAuth, async (req, res) => {
     const cells = days.map((day) => {
       const log = logMap.get(`${habit.id}-${day.dateKey}`);
       const isCompleted = log?.status === HabitStatus.COMPLETED;
-      const rawValue = typeof log?.value === 'number' ? log.value : null;
+      const rawValue = typeof log?.value === "number" ? log.value : null;
 
       let cellProgress = 0;
 
-      if (habit.habitType === 'BOOLEAN') {
+      if (habit.habitType === "BOOLEAN") {
         cellProgress = isCompleted ? 100 : 0;
       } else if (habit.targetValue && rawValue != null) {
         cellProgress = Math.round(
-          Math.max(0, Math.min(100, (rawValue / habit.targetValue) * 100))
+          Math.max(0, Math.min(100, (rawValue / habit.targetValue) * 100)),
         );
       } else if (rawValue != null) {
         // No explicit target – treat any value as full for visualization
@@ -574,7 +547,9 @@ router.get('/matrix', requireAuth, async (req, res) => {
     const expectedCount = days.length;
     const completedCount = cells.filter((c) => c.isCompleted).length;
     const progressPercent =
-      expectedCount > 0 ? Math.round((completedCount / expectedCount) * 100) : 0;
+      expectedCount > 0
+        ? Math.round((completedCount / expectedCount) * 100)
+        : 0;
 
     return {
       habit,
@@ -592,7 +567,8 @@ router.get('/matrix', requireAuth, async (req, res) => {
       if (row.cells[index].isCompleted) completed += 1;
     });
     const notDone = totalHabits - completed;
-    const percent = totalHabits > 0 ? Math.round((completed / totalHabits) * 100) : 0;
+    const percent =
+      totalHabits > 0 ? Math.round((completed / totalHabits) * 100) : 0;
     return {
       dateKey: day.dateKey,
       label: day.label,
@@ -609,9 +585,9 @@ router.get('/matrix', requireAuth, async (req, res) => {
     progressPercent: row.progressPercent,
   }));
 
-  res.render('habits-matrix', {
-    layout: 'main',
-    title: 'Habit Matrix',
+  res.render("habits-matrix", {
+    layout: "main",
+    title: "Habit Matrix",
     user: req.currentUser,
     habits,
     weeks: weeksForView,
@@ -626,13 +602,13 @@ router.get('/matrix', requireAuth, async (req, res) => {
 });
 
 /* Goals & streaks view – multi-habit goals */
-router.get('/goals', requireAuth, async (req, res) => {
+router.get("/goals", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
 
   const [habits, goalsRaw] = await Promise.all([
     prisma.habit.findMany({
       where: { userId, isArchived: false },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     }),
     prisma.habitGoal.findMany({
       where: { userId },
@@ -640,7 +616,7 @@ router.get('/goals', requireAuth, async (req, res) => {
         items: { include: { habit: true } },
         habit: true,
       },
-      orderBy: { endDate: 'asc' },
+      orderBy: { endDate: "asc" },
     }),
   ]);
 
@@ -650,7 +626,7 @@ router.get('/goals', requireAuth, async (req, res) => {
       if (goal.items.length > 0) {
         const totalWeightedTarget = goal.items.reduce(
           (sum, item) => sum + item.targetCount * item.weight,
-          0
+          0,
         );
 
         let weightedCompleted = 0;
@@ -708,12 +684,12 @@ router.get('/goals', requireAuth, async (req, res) => {
         totalWeightedTarget: goal.target,
         segments: [],
       };
-    })
+    }),
   );
 
-  res.render('habits-goals', {
-    layout: 'main',
-    title: 'Habit Goals',
+  res.render("habits-goals", {
+    layout: "main",
+    title: "Habit Goals",
     user: req.currentUser,
     habits,
     goals,
@@ -721,20 +697,16 @@ router.get('/goals', requireAuth, async (req, res) => {
 });
 
 /* Create a new multi-habit goal */
-router.post('/goals', requireAuth, async (req, res) => {
+router.post("/goals", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
-  const {
-    goalScope,
-    startDate,
-    endDate,
-    description,
-  } = req.body;
+  const { goalScope, startDate, endDate, description } = req.body;
 
   let { habitIds, targetCounts, weights } = req.body;
 
   // Normalize to arrays
   if (!Array.isArray(habitIds)) habitIds = habitIds ? [habitIds] : [];
-  if (!Array.isArray(targetCounts)) targetCounts = targetCounts ? [targetCounts] : [];
+  if (!Array.isArray(targetCounts))
+    targetCounts = targetCounts ? [targetCounts] : [];
   if (!Array.isArray(weights)) weights = weights ? [weights] : [];
 
   const items = habitIds
@@ -746,16 +718,20 @@ router.post('/goals', requireAuth, async (req, res) => {
       if (!habitId || !targetCount) return null;
       return { habitId, targetCount, weight: weight || 1 };
     })
-    .filter(Boolean) as { habitId: number; targetCount: number; weight: number }[];
+    .filter(Boolean) as {
+    habitId: number;
+    targetCount: number;
+    weight: number;
+  }[];
 
   if (!items.length) {
     // nothing selected – for now, just redirect back
-    return res.redirect('/habits/goals');
+    return res.redirect("/habits/goals");
   }
 
   const totalWeightedTarget = items.reduce(
     (sum, item) => sum + item.targetCount * item.weight,
-    0
+    0,
   );
 
   const goal = await prisma.habitGoal.create({
@@ -780,7 +756,7 @@ router.post('/goals', requireAuth, async (req, res) => {
     })),
   });
 
-  res.redirect('/habits/goals');
+  res.redirect("/habits/goals");
 });
 
 export default router;
