@@ -1,38 +1,106 @@
 <section class="space-y-4">
-  <header class="flex items-center justify-between">
+  <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h1 class="text-lg font-semibold">Today's Nutrition</h1>
+      <h1 class="text-lg font-semibold">Nutrition</h1>
       <p class="text-xs text-slate-500">
-        Track meals, macros, and micro-nutrients.
+        Track meals, macros, micro-nutrients, and water.
       </p>
     </div>
-    <a href="/nutrition/foods/search" class="px-3 py-1 rounded-md bg-emerald-500 text-white text-xs">
-      + Add Food
-    </a>
+    <div class="flex flex-col sm:flex-row gap-2 items-center">
+      <form method="get" action="/nutrition/daily" class="flex items-center gap-2 text-xs">
+        <button
+          type="submit"
+          name="date"
+          value="{{dateInput prevDate}}"
+          class="px-2 py-1 rounded border">
+          ←
+        </button>
+        <input
+          type="date"
+          name="date"
+          class="px-2 py-1 rounded border"
+          value="{{dateInput currentDate}}">
+        <button
+          type="submit"
+          class="px-2 py-1 rounded bg-emerald-500 text-white">
+          Go
+        </button>
+        <a
+          href="/nutrition/daily"
+          class="ml-2 text-emerald-500">
+          Today
+        </a>
+        <button
+          type="submit"
+          name="date"
+          value="{{dateInput nextDate}}"
+          class="px-2 py-1 rounded border">
+          →
+        </button>
+      </form>
+      <a href="/nutrition/foods/search" class="px-3 py-1 rounded-md bg-emerald-500 text-white text-xs">
+        + Add Food
+      </a>
+    </div>
   </header>
 
-  <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <div>
-        <p class="text-slate-500">Calories</p>
-        <p class="text-lg font-semibold">{{summary.caloriesEaten}} / {{summary.goal}}</p>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div>
+          <p class="text-slate-500">Calories</p>
+          <p class="text-lg font-semibold">{{summary.caloriesEaten}} / {{summary.goal}}</p>
+        </div>
+        <div>
+          <p class="text-slate-500">Protein</p>
+          <p class="text-lg font-semibold">{{summary.protein}} g</p>
+        </div>
+        <div>
+          <p class="text-slate-500">Carbs</p>
+          <p class="text-lg font-semibold">{{summary.carbs}} g</p>
+        </div>
+        <div>
+          <p class="text-slate-500">Fat</p>
+          <p class="text-lg font-semibold">{{summary.fat}} g</p>
+        </div>
       </div>
-      <div>
-        <p class="text-slate-500">Protein</p>
-        <p class="text-lg font-semibold">{{summary.protein}} g</p>
-      </div>
-      <div>
-        <p class="text-slate-500">Carbs</p>
-        <p class="text-lg font-semibold">{{summary.carbs}} g</p>
-      </div>
-      <div>
-        <p class="text-slate-500">Fat</p>
-        <p class="text-lg font-semibold">{{summary.fat}} g</p>
+
+      <div class="mt-2">
+        <canvas id="macroChart" class="w-full h-40"></canvas>
       </div>
     </div>
 
-    <div class="mt-2">
-      <canvas id="macroChart" class="w-full h-40"></canvas>
+    <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
+      <p class="text-slate-500 mb-1">Water</p>
+      <p class="text-lg font-semibold mb-1">{{waterTotalMl}} ml</p>
+      <p class="text-[11px] text-slate-500 mb-2">
+        Goal: {{waterGoalMl}} ml
+      </p>
+
+      <div class="water-progress mb-2" aria-label="Water progress">
+        <div
+          class="water-progress-fill"
+          style="width: {{multiply waterTotalMl 100 waterGoalMl}}%;"></div>
+      </div>
+
+      <form action="/nutrition/water" method="post" class="flex flex-wrap gap-2">
+        <input type="hidden" name="unit" value="ML">
+        <button name="amount" value="250" class="px-3 py-1 rounded-full border text-[11px]">
+          +250 ml
+        </button>
+        <button name="amount" value="500" class="px-3 py-1 rounded-full border text-[11px]">
+          +500 ml
+        </button>
+        <button name="amount" value="-250" class="px-3 py-1 rounded-full border text-[11px]">
+          −250 ml
+        </button>
+        <button name="amount" value="-500" class="px-3 py-1 rounded-full border text-[11px]">
+          −500 ml
+        </button>
+      </form>
+      <p class="mt-1 text-[11px] text-slate-500">
+        Adjust to correct mistakes for this day.
+      </p>
     </div>
   </div>
 

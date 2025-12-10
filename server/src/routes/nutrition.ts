@@ -3,27 +3,57 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 import { MealType, Unit } from '@prisma/client';
-import { startOfDay } from 'date-fns';
+import { startOfDay, format, parseISO, addDays, subDays } from 'date-fns';
 import { getDailyNutritionSummary, scaleNutrition } from '../services/nutritionService';
-import { format } from 'date-fns';
 
 const router = Router();
 
 /* Daily log view */
 router.get('/daily', requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
-  const today = new Date();
-  const start = startOfDay(today);
+  const dateParam = req.query.date;
+
+  let currentDate = new Date();
+
+  if (typeof dateParam === 'string' && dateParam.trim() !== '') {
+    try {
+      const parsed = parseISO(dateParam);
+      if (!isNaN(parsed.getTime())) {
+        currentDate = parsed;
+      }
+    } catch {
+      // ignore, keep today
+    }
+  }
+
+  const start = startOfDay(currentDate);
   const end = new Date(start.getTime() + 86400000);
 
-  const [entries, summary] = await Promise.all([
+  const [entries, summary, waterToday, userProfile] = await Promise.all([
     prisma.userFoodEntry.findMany({
       where: { userId, dateTime: { gte: start, lt: end } },
       include: { foodItem: true, brandedFoodItem: true, customFood: true, recipe: true },
       orderBy: { dateTime: 'asc' },
     }),
-    getDailyNutritionSummary(userId, today),
+    getDailyNutritionSummary(userId, currentDate),
+    prisma.waterLog.aggregate({
+      _sum: { amount: true },
+      where: {
+        userId,
+        dateTime: { gte: start, lt: end },
+      },
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { waterGoalMl: true },
+    }),
   ]);
+
+  const waterTotalMl = waterToday._sum.amount ?? 0;
+  const waterGoalMl = userProfile?.waterGoalMl ?? 2000;
+
+  const prevDate = subDays(currentDate, 1);
+  const nextDate = addDays(currentDate, 1);
 
   res.render('nutrition-daily', {
     layout: 'main',
@@ -32,6 +62,11 @@ router.get('/daily', requireAuth, async (req, res) => {
     entries,
     summary,
     mealTypes: Object.values(MealType),
+    currentDate,
+    prevDate,
+    nextDate,
+    waterTotalMl,
+    waterGoalMl,
   });
 });
 
