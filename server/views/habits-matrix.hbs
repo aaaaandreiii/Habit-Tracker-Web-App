@@ -69,21 +69,24 @@
                     </td>
                     {{#each this.cells}}
                       <td class="text-center border-b border-slate-100 dark:border-slate-800 px-1 py-1">
-                        {{#if isCompleted}}
-                          <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px]">
-                            ✓
-                          </span>
-                        {{else}}
-                          {{#if value}}
-                            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-[10px]">
-                              {{value}}
-                            </span>
-                          {{else}}
-                            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px]">
-                              •
-                            </span>
-                          {{/if}}
-                        {{/if}}
+                        <div
+                          class="mx-auto h-4 w-10 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
+                          title="{{../habit.name}} · {{this.dateLabel}} ({{this.dateKey}})"
+                        >
+                          <div
+                            class="h-full
+                                  {{#if this.isCompleted}}
+                                    bg-emerald-500
+                                  {{else}}
+                                    {{#if this.value}}
+                                      bg-amber-400
+                                    {{else}}
+                                      bg-slate-300 dark:bg-slate-600
+                                    {{/if}}
+                                  {{/if}}"
+                            style="width: {{this.progressPercent}}%;"
+                          ></div>
+                        </div>
                       </td>
                     {{/each}}
                   </tr>

@@ -22,7 +22,8 @@
         <div class="flex flex-col items-center gap-1">
           <div
             class="h-8 w-8 rounded flex items-center justify-center text-[11px] {{heatmapClass completions}}"
-            title="{{completions}} habit(s) completed on {{label}}">
+            title="{{label}} · {{completions}} habit(s) completed{{#if habits.length}}: {{#each habits}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}"
+          >
             <span>{{day}}</span>
           </div>
           <span class="hidden sm:block text-[9px] text-slate-500">{{label}}</span>
