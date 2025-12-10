@@ -1,9 +1,11 @@
 <div
-  class="habit-card-wrapper mb-2"
+  class="habit-card mb-2"
   data-habit-id="{{habit.id}}"
   data-habit-name="{{habit.name}}"
 >
-  <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2">
+  <div class="habit-card-fill"></div>
+
+  <div class="habit-card-content flex items-center justify-between bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2">
     <div class="flex items-center gap-2">
       <span class="h-6 w-1 rounded-full" style="background-color: {{habit.color}};"></span>
       <div class="text-xs">
@@ -21,13 +23,23 @@
 
     <div class="flex items-center gap-2 text-[11px]">
       {{#if (eq habit.habitType "BOOLEAN")}}
-        <button
-          class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700"
-          data-habit-id="{{habit.id}}"
-          data-habit-type="BOOLEAN"
-        >
-          ✓ Done
-        </button>
+        {{#if (habitCompleted habit.logs)}}
+          <button
+            class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 bg-emerald-500 text-white"
+            data-habit-id="{{habit.id}}"
+            data-habit-type="BOOLEAN"
+          >
+            ✓ Done
+          </button>
+        {{else}}
+          <button
+            class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700"
+            data-habit-id="{{habit.id}}"
+            data-habit-type="BOOLEAN"
+          >
+            ✓ Done
+          </button>
+        {{/if}}
       {{else}}
         <div class="flex items-center gap-1">
           <button

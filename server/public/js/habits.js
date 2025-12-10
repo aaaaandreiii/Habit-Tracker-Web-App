@@ -370,4 +370,61 @@ document.addEventListener('DOMContentLoaded', () => {
       syncHabitValue(habitId, input.value);
     });
   });
+
+    // ==== HABIT CARD WATER-FILL EFFECT ====
+
+  const cardWrappers = document.querySelectorAll('.habit-card-wrapper');
+
+  cardWrappers.forEach((wrapper) => {
+    const card = wrapper.querySelector('.habit-card');
+    const fill = wrapper.querySelector('.habit-card-fill');
+    if (!card || !fill) return;
+
+    // getProgressScore returns ~0..1 for most cases; clamp it
+    const ratio = Math.max(0, Math.min(1, getProgressScore(wrapper)));
+    const target = ratio; // 0..1
+
+    // Start empty
+    fill.style.transform = 'scaleX(0)';
+
+    let done = false;
+    let started = false;
+
+    fill.addEventListener('transitionend', () => {
+      done = true;
+    });
+
+    function fillToTarget(durationSeconds) {
+      if (done) return;
+      fill.style.transitionDuration = durationSeconds + 's';
+      // Force layout so duration change is applied before transform
+      void fill.offsetWidth;
+      fill.style.transform = `scaleX(${target})`;
+    }
+
+    card.addEventListener('mouseenter', () => {
+      if (done) return;
+      started = true;
+      // Nice slow fill
+      fillToTarget(0.7);
+    });
+
+    card.addEventListener('mouseleave', () => {
+      // If user leaves early, speed up and finish
+      if (!started || done) return;
+      fillToTarget(0.15);
+    });
+
+    // Touch devices – treat first tap as hover
+    card.addEventListener(
+      'touchstart',
+      () => {
+        if (done) return;
+        started = true;
+        fillToTarget(0.7);
+      },
+      { passive: true }
+    );
+  });
+
 });
