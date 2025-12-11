@@ -4,11 +4,12 @@
   "main": "dist/server/src/index.js",
   "scripts": {
     "dev": "nodemon --watch server/src --exec ts-node server/src/index.ts",
-    "build": "tsc",
+    "build": "tsc && prisma generate",
     "start": "node dist/server/src/index.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "format": "prettier --write \"server/src/**/*.{js,jsx,ts,tsx,css,scss,html,json,md}\""
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
