@@ -22,6 +22,7 @@ export async function getTodayHabits(userId: number, date = new Date()) {
         where: {
           date: { gte: today, lt: new Date(today.getTime() + 86400000) },
         },
+        orderBy: { date: "desc" },
       },
       scheduleDates: true,
     },
@@ -154,7 +155,8 @@ export async function getHabitStreak(habitId: number) {
 
   const completedDays = logs
     .filter((l) => l.status === HabitStatus.COMPLETED)
-    .map((l) => startOfDay(l.date));
+    .map((l) => startOfDay(l.date))
+    .sort((a, b) => b.getTime() - a.getTime());
 
   let tmp = 0;
   for (let i = 0; i < completedDays.length; i++) {
