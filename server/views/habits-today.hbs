@@ -21,40 +21,39 @@
 
   {{!-- current date for logging --}}
   <input type="hidden" id="habit-current-date" value="{{dateInput currentDate}}">
-
+  
   {{!-- Date navigation --}}
   <div class="flex flex-wrap items-center gap-2 text-xs mt-1">
+    <a
+      href="/habits/today?date={{dateInput prevDate}}"
+      class="px-2 py-1 rounded border"
+    >
+      ←
+    </a>
+
     <form method="get" action="/habits/today" class="flex items-center gap-2">
-      <button
-        type="submit"
-        name="date"
-        value="{{dateInput prevDate}}"
-        class="px-2 py-1 rounded border">
-        ←
-      </button>
       <input
         type="date"
         name="date"
         class="px-2 py-1 rounded border"
-        value="{{dateInput currentDate}}">
+        value="{{dateInput currentDate}}"
+      >
       <button
         type="submit"
-        class="px-2 py-1 rounded bg-emerald-500 text-white">
+        class="px-2 py-1 rounded bg-emerald-500 text-white"
+      >
         Go
       </button>
-      <a
-        href="/habits/today"
-        class="ml-2 text-emerald-500">
-        Today
-      </a>
-      <button
-        type="submit"
-        name="date"
-        value="{{dateInput nextDate}}"
-        class="px-2 py-1 rounded border">
-        →
-      </button>
     </form>
+
+    <a href="/habits/today" class="ml-2 text-emerald-500">Today</a>
+
+    <a
+      href="/habits/today?date={{dateInput nextDate}}"
+      class="px-2 py-1 rounded border"
+    >
+      →
+    </a>
   </div>
 
   {{!-- Sort + Filters --}}

@@ -6,7 +6,7 @@
         Search your food database, log meals quickly, or create custom foods.
       </p>
     </div>
-    <a href="/nutrition/daily" class="px-3 py-1 rounded-md border text-xs">
+    <a href="/nutrition/daily{{dateQS}}" class="px-3 py-1 rounded-md border text-xs">
       ← Back to Daily
     </a>
   </header>
@@ -17,6 +17,7 @@
     action="/nutrition/foods/search"
     class="flex gap-2 text-xs bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3"
   >
+  <input type="hidden" name="date" value="{{date}}">
     <input
       type="text"
       name="q"
@@ -33,6 +34,7 @@
   <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-3 text-xs">
     <h2 class="text-sm font-semibold mb-2">Add Custom Food</h2>
     <form method="post" action="/nutrition/foods/custom" class="grid gap-2 md:grid-cols-4">
+    <input type="hidden" name="date" value="{{date}}">
       <div class="md:col-span-2">
         <label class="block mb-1">Name</label>
         <input
@@ -135,6 +137,7 @@
               </div>
               <form method="post" action="/nutrition/log" class="flex items-center gap-1">
                 <input type="hidden" name="foodItemId" value="{{this.id}}">
+                <input type="hidden" name="date" value="{{date}}">
                 <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
                   <option value="BREAKFAST">Bkfst</option>
                   <option value="LUNCH">Lunch</option>
@@ -182,6 +185,7 @@
               </div>
               <form method="post" action="/nutrition/log" class="flex items-center gap-1">
                 <input type="hidden" name="brandedFoodItemId" value="{{this.id}}">
+                <input type="hidden" name="date" value="{{date}}">
                 <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
                   <option value="BREAKFAST">Bkfst</option>
                   <option value="LUNCH">Lunch</option>
@@ -234,6 +238,7 @@
               </div>
               <form method="post" action="/nutrition/log" class="flex items-center gap-1">
                 <input type="hidden" name="customFoodId" value="{{this.id}}">
+                <input type="hidden" name="date" value="{{date}}">
                 <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
                   <option value="BREAKFAST">Bkfst</option>
                   <option value="LUNCH">Lunch</option>
@@ -290,15 +295,19 @@
               <form method="post" action="/nutrition/log" class="flex items-center gap-1">
                 {{#if this.foodItemId}}
                   <input type="hidden" name="foodItemId" value="{{this.foodItemId}}">
+                  <input type="hidden" name="date" value="{{date}}">
                 {{/if}}
                 {{#if this.brandedFoodItemId}}
                   <input type="hidden" name="brandedFoodItemId" value="{{this.brandedFoodItemId}}">
+                  <input type="hidden" name="date" value="{{date}}">
                 {{/if}}
                 {{#if this.customFoodId}}
                   <input type="hidden" name="customFoodId" value="{{this.customFoodId}}">
+                  <input type="hidden" name="date" value="{{date}}">
                 {{/if}}
                 {{#if this.recipeId}}
                   <input type="hidden" name="recipeId" value="{{this.recipeId}}">
+                  <input type="hidden" name="date" value="{{date}}">
                 {{/if}}
                 <select name="mealType" class="border rounded px-1 py-0.5 text-[11px]">
                   <option value="BREAKFAST">Bkfst</option>

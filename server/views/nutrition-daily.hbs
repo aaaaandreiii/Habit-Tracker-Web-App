@@ -7,38 +7,43 @@
       </p>
     </div>
     <div class="flex flex-col sm:flex-row gap-2 items-center">
-      <form method="get" action="/nutrition/daily" class="flex items-center gap-2 text-xs">
-        <button
-          type="submit"
-          name="date"
-          value="{{dateInput prevDate}}"
-          class="px-2 py-1 rounded border">
-          ←
-        </button>
-        <input
-          type="date"
-          name="date"
-          class="px-2 py-1 rounded border"
-          value="{{dateInput currentDate}}">
-        <button
-          type="submit"
-          class="px-2 py-1 rounded bg-emerald-500 text-white">
-          Go
-        </button>
+      <div class="flex items-center gap-2 text-xs">
         <a
-          href="/nutrition/daily"
-          class="ml-2 text-emerald-500">
-          Today
+          href="/nutrition/daily?date={{dateInput prevDate}}"
+          class="px-2 py-1 rounded border"
+        >
+          ←
         </a>
-        <button
-          type="submit"
-          name="date"
-          value="{{dateInput nextDate}}"
-          class="px-2 py-1 rounded border">
+
+        <form method="get" action="/nutrition/daily" class="flex items-center gap-2">
+          <input
+            type="date"
+            name="date"
+            class="px-2 py-1 rounded border"
+            value="{{dateInput currentDate}}"
+          >
+          <button
+            type="submit"
+            class="px-2 py-1 rounded bg-emerald-500 text-white"
+          >
+            Go
+          </button>
+        </form>
+
+        <a href="/nutrition/daily" class="ml-2 text-emerald-500">Today</a>
+
+        <a
+          href="/nutrition/daily?date={{dateInput nextDate}}"
+          class="px-2 py-1 rounded border"
+        >
           →
-        </button>
-      </form>
-      <a href="/nutrition/foods/search" class="px-3 py-1 rounded-md bg-emerald-500 text-white text-xs">
+        </a>
+      </div>
+
+      <a
+        href="/nutrition/foods/search?date={{dateInput currentDate}}"
+        class="px-3 py-1 rounded-md bg-emerald-500 text-white text-xs"
+      >
         + Add Food
       </a>
     </div>
@@ -85,6 +90,7 @@
 
       <form action="/nutrition/water" method="post" class="flex flex-wrap gap-2">
         <input type="hidden" name="unit" value="ML">
+        <input type="hidden" name="date" value="{{dateInput currentDate}}">
         <button name="amount" value="250" class="px-3 py-1 rounded-full border text-[11px]">
           +250 ml
         </button>

@@ -10,22 +10,44 @@ import {
 } from "../services/nutritionService";
 
 const router = Router();
+const UNITS = Object.values(Unit);
+
+function toUnit(value: unknown): Unit {
+  if (typeof value !== "string") return Unit.ML;
+
+  const normalized = value.trim().toUpperCase();
+
+  // accept "ml" / "ML" etc.
+  return (UNITS as string[]).includes(normalized)
+    ? (normalized as Unit)
+    : Unit.ML;
+}
 
 /* Daily log view */
 router.get("/daily", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
-  const dateParam = req.query.date;
 
   let currentDate = new Date();
 
-  if (typeof dateParam === "string" && dateParam.trim() !== "") {
-    try {
-      const parsed = parseISO(dateParam);
-      if (!isNaN(parsed.getTime())) {
-        currentDate = parsed;
-      }
-    } catch {
-      // ignore, keep today
+  const raw = req.query.date;
+
+  // Normalize query param into a string (or null)
+  const dateStr: string | null =
+    typeof raw === "string"
+      ? raw
+      : Array.isArray(raw)
+        ? (() => {
+            const strings = raw.filter(
+              (v): v is string => typeof v === "string",
+            );
+            return strings.length ? strings[strings.length - 1] : null;
+          })()
+        : null;
+
+  if (dateStr && dateStr.trim() !== "") {
+    const parsed = parseISO(dateStr);
+    if (!Number.isNaN(parsed.getTime())) {
+      currentDate = parsed;
     }
   }
 
@@ -46,10 +68,7 @@ router.get("/daily", requireAuth, async (req, res) => {
     getDailyNutritionSummary(userId, currentDate),
     prisma.waterLog.aggregate({
       _sum: { amount: true },
-      where: {
-        userId,
-        dateTime: { gte: start, lt: end },
-      },
+      where: { userId, dateTime: { gte: start, lt: end } },
     }),
     prisma.user.findUnique({
       where: { id: userId },
@@ -63,7 +82,7 @@ router.get("/daily", requireAuth, async (req, res) => {
   const prevDate = subDays(currentDate, 1);
   const nextDate = addDays(currentDate, 1);
 
-  res.render("nutrition-daily", {
+  return res.render("nutrition-daily", {
     layout: "main",
     title: "Daily Nutrition",
     user: req.currentUser,
@@ -94,8 +113,30 @@ router.get("/progress", requireAuth, async (req, res) => {
 /* Food search (hbs view or JSON) */
 router.get("/foods/search", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
-  const q = (req.query.q as string) || "";
   const limit = 20;
+
+  const rawQ = req.query.q;
+  const q =
+    typeof rawQ === "string"
+      ? rawQ
+      : Array.isArray(rawQ)
+        ? (rawQ.find((v): v is string => typeof v === "string") ?? "")
+        : "";
+
+  const rawDate = req.query.date;
+  const date =
+    typeof rawDate === "string"
+      ? rawDate
+      : Array.isArray(rawDate)
+        ? (() => {
+            const strings = rawDate.filter(
+              (v): v is string => typeof v === "string",
+            );
+            return strings.length ? strings[strings.length - 1] : "";
+          })()
+        : "";
+
+  const dateQS = date ? `?date=${encodeURIComponent(date)}` : "";
 
   const [generic, branded, customFoods, recentEntries] = await Promise.all([
     prisma.foodItem.findMany({
@@ -114,10 +155,7 @@ router.get("/foods/search", requireAuth, async (req, res) => {
       take: limit,
     }),
     prisma.customFood.findMany({
-      where: {
-        userId,
-        ...(q ? { name: { contains: q } } : {}),
-      },
+      where: { userId, ...(q ? { name: { contains: q } } : {}) },
       take: limit,
     }),
     prisma.userFoodEntry.findMany({
@@ -137,7 +175,7 @@ router.get("/foods/search", requireAuth, async (req, res) => {
     return res.json({ generic, branded, customFoods, recentEntries });
   }
 
-  res.render("nutrition-search", {
+  return res.render("nutrition-search", {
     layout: "main",
     title: "Search Foods",
     user: req.currentUser,
@@ -146,6 +184,8 @@ router.get("/foods/search", requireAuth, async (req, res) => {
     branded,
     customFoods,
     recentEntries,
+    date,
+    dateQS,
   });
 });
 
@@ -189,7 +229,10 @@ router.post("/foods/custom", requireAuth, async (req, res) => {
     },
   });
 
-  res.redirect(`/nutrition/foods/search?q=${encodeURIComponent(name)}`);
+  const date = typeof req.body.date === "string" ? req.body.date : "";
+  const params = new URLSearchParams({ q: name });
+  if (date) params.set("date", date);
+  res.redirect(`/nutrition/foods/search?${params.toString()}`);
 });
 
 /* Barcode lookup (mobile hook) */
@@ -217,7 +260,21 @@ router.post("/log", requireAuth, async (req, res) => {
     unit,
   } = req.body;
 
-  const dateTime = new Date();
+  const now = new Date();
+  let dateTime = now;
+
+  if (typeof req.body.date === "string" && req.body.date.trim() !== "") {
+    const base = parseISO(req.body.date);
+    if (!isNaN(base.getTime())) {
+      dateTime = new Date(base);
+      dateTime.setHours(
+        now.getHours(),
+        now.getMinutes(),
+        now.getSeconds(),
+        now.getMilliseconds(),
+      );
+    }
+  }
 
   let baseFood: any = null;
   let baseAmount = 100;
@@ -283,25 +340,58 @@ router.post("/log", requireAuth, async (req, res) => {
     },
   });
 
-  res.redirect("/nutrition/daily");
+  if (typeof req.body.date === "string" && req.body.date.trim() !== "") {
+    return res.redirect(
+      `/nutrition/daily?date=${encodeURIComponent(req.body.date)}`,
+    );
+  }
+  return res.redirect("/nutrition/daily");
 });
 
 /* Water logging (quick buttons) */
 router.post("/water", requireAuth, async (req, res) => {
-  const { amount, unit } = req.body;
+  const { amount, unit, date } = req.body as {
+    amount: string;
+    unit?: unknown;
+    date?: unknown;
+  };
+
+  const now = new Date();
+  let dateTime = now;
+
+  if (typeof date === "string" && date.trim() !== "") {
+    const base = parseISO(date);
+    if (!Number.isNaN(base.getTime())) {
+      dateTime = new Date(base);
+      dateTime.setHours(
+        now.getHours(),
+        now.getMinutes(),
+        now.getSeconds(),
+        now.getMilliseconds(),
+      );
+    }
+  }
+
+  const unitValue = toUnit(unit);
+
   await prisma.waterLog.create({
     data: {
       userId: req.currentUser!.id,
       amount: Number(amount),
-      unit: unit || "ML",
-      dateTime: new Date(),
+      unit: unitValue,
+      dateTime,
     },
   });
 
   if (req.headers.accept?.includes("application/json")) {
     return res.json({ success: true });
   }
-  res.redirect("/dashboard");
+
+  if (typeof date === "string" && date.trim() !== "") {
+    return res.redirect(`/nutrition/daily?date=${encodeURIComponent(date)}`);
+  }
+
+  return res.redirect("/water");
 });
 
 /* Exercise logging (manual) */

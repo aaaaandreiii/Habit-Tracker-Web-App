@@ -20,19 +20,26 @@ const router = Router();
 /* Today view with quick logging */
 router.get("/today", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
-  const dateParam = req.query.date;
+
+  const raw = req.query.date;
+
+  const dateStr: string | null =
+    typeof raw === "string"
+      ? raw
+      : Array.isArray(raw)
+        ? (() => {
+            const strings = raw.filter(
+              (v): v is string => typeof v === "string",
+            );
+            return strings.length ? strings[strings.length - 1] : null;
+          })()
+        : null;
 
   let currentDate = new Date();
 
-  if (typeof dateParam === "string" && dateParam.trim() !== "") {
-    try {
-      const parsed = parseISO(dateParam);
-      if (!isNaN(parsed.getTime())) {
-        currentDate = parsed;
-      }
-    } catch {
-      // ignore bad date and fall back to today
-    }
+  if (dateStr && dateStr.trim() !== "") {
+    const parsed = parseISO(dateStr);
+    if (!Number.isNaN(parsed.getTime())) currentDate = parsed;
   }
 
   const habits = await getTodayHabits(userId, currentDate);
@@ -48,7 +55,7 @@ router.get("/today", requireAuth, async (req, res) => {
     ),
   ).sort((a, b) => a.localeCompare(b));
 
-  res.render("habits-today", {
+  return res.render("habits-today", {
     layout: "main",
     title: "Today's Habits",
     user: req.currentUser,
