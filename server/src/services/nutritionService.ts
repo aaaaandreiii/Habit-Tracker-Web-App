@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { ActivityLevel, GoalType, Unit } from "@prisma/client";
 import { startOfDay } from "date-fns";
+import { roundUpToTwo } from "../utils/round";
 
 function activityMultiplier(level: ActivityLevel | null): number {
   switch (level) {
@@ -84,21 +85,21 @@ export async function getDailyNutritionSummary(
       goalType: user?.goalType ?? null,
     });
 
-  const netCalories = goal - caloriesEaten + caloriesBurned;
-  const remaining = goal - caloriesEaten + caloriesBurned;
+  const netCalories = caloriesEaten - caloriesBurned;
+  const remaining = goal - netCalories;
 
   return {
-    goal,
-    caloriesEaten,
-    caloriesBurned,
-    netCalories,
-    remaining,
-    protein,
-    carbs,
-    fat,
-    fiber,
-    sugar,
-    sodium,
+    goal: roundUpToTwo(goal),
+    caloriesEaten: roundUpToTwo(caloriesEaten),
+    caloriesBurned: roundUpToTwo(caloriesBurned),
+    netCalories: roundUpToTwo(netCalories),
+    remaining: roundUpToTwo(remaining),
+    protein: roundUpToTwo(protein),
+    carbs: roundUpToTwo(carbs),
+    fat: roundUpToTwo(fat),
+    fiber: roundUpToTwo(fiber),
+    sugar: roundUpToTwo(sugar),
+    sodium: roundUpToTwo(sodium),
   };
 }
 
@@ -120,12 +121,12 @@ export function scaleNutrition(
   // Simplified: treat unit as grams equivalent; for real app add unit conversion table.
   const factor = quantity / baseAmount || 0;
   return {
-    calories: base.calories * factor,
-    protein: base.protein * factor,
-    carbs: base.carbs * factor,
-    fat: base.fat * factor,
-    fiber: (base.fiber ?? 0) * factor,
-    sugar: (base.sugar ?? 0) * factor,
-    sodium: (base.sodium ?? 0) * factor,
+    calories: roundUpToTwo(base.calories * factor),
+    protein: roundUpToTwo(base.protein * factor),
+    carbs: roundUpToTwo(base.carbs * factor),
+    fat: roundUpToTwo(base.fat * factor),
+    fiber: roundUpToTwo((base.fiber ?? 0) * factor),
+    sugar: roundUpToTwo((base.sugar ?? 0) * factor),
+    sodium: roundUpToTwo((base.sodium ?? 0) * factor),
   };
 }

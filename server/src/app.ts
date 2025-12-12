@@ -90,6 +90,12 @@ export const createApp = () => {
             .filter(Boolean);
           return list.includes(String(token).toUpperCase());
         },
+        fmt2: (v: any) => {
+          const n = Number(v);
+          if (!Number.isFinite(n)) return "0.00";
+          // round UP and display 2dp
+          return (Math.ceil(n * 100 - 1e-9) / 100).toFixed(2);
+        },
       },
     }),
   );
