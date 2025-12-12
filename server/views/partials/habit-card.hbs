@@ -21,52 +21,54 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2 text-[11px]">
-      {{#if (eq habit.habitType "BOOLEAN")}}
-        {{#if (habitCompleted habit.logs)}}
-          <button
-            class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 bg-emerald-500 text-white"
-            data-habit-id="{{habit.id}}"
-            data-habit-type="BOOLEAN"
-          >
-            ✓ Done
-          </button>
+        <div class="habit-right flex items-center gap-2 text-[11px] flex-nowrap">
+      <div class="habit-controls flex items-center gap-2 flex-nowrap">
+        {{#if (eq habit.habitType "BOOLEAN")}}
+          {{#if (habitCompleted habit.logs)}}
+            <button
+              class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 bg-emerald-500 text-white"
+              data-habit-id="{{habit.id}}"
+              data-habit-type="BOOLEAN"
+            >
+              ✓ Done
+            </button>
+          {{else}}
+            <button
+              class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700"
+              data-habit-id="{{habit.id}}"
+              data-habit-type="BOOLEAN"
+            >
+              ✓ Done
+            </button>
+          {{/if}}
         {{else}}
-          <button
-            class="habit-toggle px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700"
-            data-habit-id="{{habit.id}}"
-            data-habit-type="BOOLEAN"
-          >
-            ✓ Done
-          </button>
+          <div class="flex items-center gap-1 flex-nowrap">
+            <button
+              class="habit-minus w-7 h-7 rounded-full border text-xs"
+              data-habit-id="{{habit.id}}"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              class="habit-value w-16 text-center text-xs border rounded"
+              data-habit-id="{{habit.id}}"
+              data-target-value="{{habit.targetValue}}"
+              value="{{#if habit.logs.[0]}}{{habit.logs.[0].value}}{{else}}0{{/if}}"
+              min="0"
+            >
+            <button
+              class="habit-plus w-7 h-7 rounded-full border text-xs"
+              data-habit-id="{{habit.id}}"
+            >
+              +
+            </button>
+          </div>
         {{/if}}
-      {{else}}
-        <div class="flex items-center gap-1">
-          <button
-            class="habit-minus w-7 h-7 rounded-full border text-xs"
-            data-habit-id="{{habit.id}}"
-          >
-            −
-          </button>
-          <input
-            type="number"
-            class="habit-value w-16 text-center text-xs border rounded"
-            data-habit-id="{{habit.id}}"
-            data-target-value="{{habit.targetValue}}"
-            value="{{#if habit.logs.[0]}}{{habit.logs.[0].value}}{{else}}0{{/if}}"
-            min="0"
-          >
-          <button
-            class="habit-plus w-7 h-7 rounded-full border text-xs"
-            data-habit-id="{{habit.id}}"
-          >
-            +
-          </button>
-        </div>
-      {{/if}}
+      </div>
 
-      <!-- Edit/Delete actions – hidden unless body.habit-edit-mode -->
-      <div class="habit-actions flex items-center gap-1 ml-2">
+      <!-- Edit/Delete actions (collapsed when NOT in edit mode) -->
+      <div class="habit-actions flex items-center gap-1">
         <a
           href="/habits/{{habit.id}}/edit"
           class="px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 text-[10px]"
