@@ -23,11 +23,15 @@ function toUnit(value: unknown): Unit {
     : Unit.ML;
 }
 
+router.get("/", requireAuth, (req, res) => {
+  return res.redirect("/nutrition/daily");
+});
+
 /* Daily log view */
 router.get("/daily", requireAuth, async (req, res) => {
   const userId = req.currentUser!.id;
-
   let currentDate = new Date();
+  const currentDateLabel = format(currentDate, "EEEE, MMM d, yyyy");
 
   const raw = req.query.date;
 
@@ -90,6 +94,7 @@ router.get("/daily", requireAuth, async (req, res) => {
     summary,
     mealTypes: Object.values(MealType),
     currentDate,
+    currentDateLabel,
     prevDate,
     nextDate,
     waterTotalMl,
@@ -391,7 +396,8 @@ router.post("/water", requireAuth, async (req, res) => {
     return res.redirect(`/nutrition/daily?date=${encodeURIComponent(date)}`);
   }
 
-  return res.redirect("/water");
+    // If coming from dashboard (no date field), go back where the user came from
+  return res.redirect(req.get("referer") || "/water" || "/nutrition/daily");
 });
 
 /* Exercise logging (manual) */
