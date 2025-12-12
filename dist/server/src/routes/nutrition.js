@@ -7,91 +7,181 @@ const prisma_1 = require("../lib/prisma");
 const client_1 = require("@prisma/client");
 const date_fns_1 = require("date-fns");
 const nutritionService_1 = require("../services/nutritionService");
-const date_fns_2 = require("date-fns");
 const router = (0, express_1.Router)();
 /* Daily log view */
-router.get('/daily', auth_1.requireAuth, async (req, res) => {
+router.get("/daily", auth_1.requireAuth, async (req, res) => {
     const userId = req.currentUser.id;
-    const today = new Date();
-    const start = (0, date_fns_1.startOfDay)(today);
+    const dateParam = req.query.date;
+    let currentDate = new Date();
+    if (typeof dateParam === "string" && dateParam.trim() !== "") {
+        try {
+            const parsed = (0, date_fns_1.parseISO)(dateParam);
+            if (!isNaN(parsed.getTime())) {
+                currentDate = parsed;
+            }
+        }
+        catch {
+            // ignore, keep today
+        }
+    }
+    const start = (0, date_fns_1.startOfDay)(currentDate);
     const end = new Date(start.getTime() + 86400000);
-    const [entries, summary] = await Promise.all([
+    const [entries, summary, waterToday, userProfile] = await Promise.all([
         prisma_1.prisma.userFoodEntry.findMany({
             where: { userId, dateTime: { gte: start, lt: end } },
-            include: { foodItem: true, brandedFoodItem: true, customFood: true, recipe: true },
-            orderBy: { dateTime: 'asc' },
+            include: {
+                foodItem: true,
+                brandedFoodItem: true,
+                customFood: true,
+                recipe: true,
+            },
+            orderBy: { dateTime: "asc" },
         }),
-        (0, nutritionService_1.getDailyNutritionSummary)(userId, today),
+        (0, nutritionService_1.getDailyNutritionSummary)(userId, currentDate),
+        prisma_1.prisma.waterLog.aggregate({
+            _sum: { amount: true },
+            where: {
+                userId,
+                dateTime: { gte: start, lt: end },
+            },
+        }),
+        prisma_1.prisma.user.findUnique({
+            where: { id: userId },
+            select: { waterGoalMl: true },
+        }),
     ]);
-    res.render('nutrition-daily', {
-        layout: 'main',
-        title: 'Daily Nutrition',
+    const waterTotalMl = waterToday._sum.amount ?? 0;
+    const waterGoalMl = userProfile?.waterGoalMl ?? 2000;
+    const prevDate = (0, date_fns_1.subDays)(currentDate, 1);
+    const nextDate = (0, date_fns_1.addDays)(currentDate, 1);
+    res.render("nutrition-daily", {
+        layout: "main",
+        title: "Daily Nutrition",
         user: req.currentUser,
         entries,
         summary,
         mealTypes: Object.values(client_1.MealType),
+        currentDate,
+        prevDate,
+        nextDate,
+        waterTotalMl,
+        waterGoalMl,
     });
 });
 /* Progress / trends view (weight + calories trend) */
-router.get('/progress', auth_1.requireAuth, async (req, res) => {
+router.get("/progress", auth_1.requireAuth, async (req, res) => {
     const userId = req.currentUser.id;
     const summary = await (0, nutritionService_1.getDailyNutritionSummary)(userId, new Date());
-    res.render('nutrition-progress', {
-        layout: 'main',
-        title: 'Progress',
+    res.render("nutrition-progress", {
+        layout: "main",
+        title: "Progress",
         user: req.currentUser,
         summary,
     });
 });
 /* Food search (hbs view or JSON) */
-router.get('/foods/search', auth_1.requireAuth, async (req, res) => {
-    const q = req.query.q || '';
+router.get("/foods/search", auth_1.requireAuth, async (req, res) => {
+    const userId = req.currentUser.id;
+    const q = req.query.q || "";
     const limit = 20;
-    const [generic, branded] = await Promise.all([
+    const [generic, branded, customFoods, recentEntries] = await Promise.all([
         prisma_1.prisma.foodItem.findMany({
-            where: { name: { contains: q } },
+            where: q ? { name: { contains: q } } : {},
             take: limit,
         }),
         prisma_1.prisma.brandedFoodItem.findMany({
+            where: q
+                ? {
+                    OR: [
+                        { productName: { contains: q } },
+                        { brandName: { contains: q } },
+                    ],
+                }
+                : {},
+            take: limit,
+        }),
+        prisma_1.prisma.customFood.findMany({
             where: {
-                OR: [
-                    { productName: { contains: q } },
-                    { brandName: { contains: q } },
-                ],
+                userId,
+                ...(q ? { name: { contains: q } } : {}),
             },
             take: limit,
         }),
+        prisma_1.prisma.userFoodEntry.findMany({
+            where: { userId },
+            orderBy: { dateTime: "desc" },
+            take: 10,
+            include: {
+                foodItem: true,
+                brandedFoodItem: true,
+                customFood: true,
+                recipe: true,
+            },
+        }),
     ]);
-    if (req.headers.accept?.includes('application/json')) {
-        return res.json({ generic, branded });
+    if (req.headers.accept?.includes("application/json")) {
+        return res.json({ generic, branded, customFoods, recentEntries });
     }
-    res.render('nutrition-search', {
-        layout: 'main',
-        title: 'Search Foods',
+    res.render("nutrition-search", {
+        layout: "main",
+        title: "Search Foods",
         user: req.currentUser,
         q,
         generic,
         branded,
+        customFoods,
+        recentEntries,
     });
 });
+/* Create a custom food from the search page */
+router.post("/foods/custom", auth_1.requireAuth, async (req, res) => {
+    const userId = req.currentUser.id;
+    const { name, servingSizeDesc, baseServingSizeAmount, baseServingSizeUnit, calories, protein, carbs, fat, fiber, sugar, sodium, } = req.body;
+    if (!name || !calories) {
+        return res.redirect("/nutrition/foods/search");
+    }
+    await prisma_1.prisma.customFood.create({
+        data: {
+            userId,
+            name,
+            servingSizeDesc,
+            baseServingSizeAmount: baseServingSizeAmount
+                ? Number(baseServingSizeAmount)
+                : 100,
+            baseServingSizeUnit: baseServingSizeUnit || client_1.Unit.G,
+            calories: Number(calories),
+            protein: protein ? Number(protein) : 0,
+            carbs: carbs ? Number(carbs) : 0,
+            fat: fat ? Number(fat) : 0,
+            fiber: fiber ? Number(fiber) : 0,
+            sugar: sugar ? Number(sugar) : 0,
+            sodium: sodium ? Number(sodium) : 0,
+        },
+    });
+    res.redirect(`/nutrition/foods/search?q=${encodeURIComponent(name)}`);
+});
 /* Barcode lookup (mobile hook) */
-router.get('/foods/barcode/:code', auth_1.requireAuth, async (req, res) => {
+router.get("/foods/barcode/:code", auth_1.requireAuth, async (req, res) => {
     const { code } = req.params;
-    const food = await prisma_1.prisma.brandedFoodItem.findUnique({ where: { barcode: code } });
+    const food = await prisma_1.prisma.brandedFoodItem.findUnique({
+        where: { barcode: code },
+    });
     if (!food) {
         return res.status(404).json({ found: false });
     }
     res.json({ found: true, food });
 });
 /* Log a food entry */
-router.post('/log', auth_1.requireAuth, async (req, res) => {
+router.post("/log", auth_1.requireAuth, async (req, res) => {
     const userId = req.currentUser.id;
     const { mealType, foodItemId, brandedFoodItemId, customFoodId, recipeId, quantity, unit, } = req.body;
     const dateTime = new Date();
     let baseFood = null;
     let baseAmount = 100;
     if (foodItemId) {
-        baseFood = await prisma_1.prisma.foodItem.findUnique({ where: { id: Number(foodItemId) } });
+        baseFood = await prisma_1.prisma.foodItem.findUnique({
+            where: { id: Number(foodItemId) },
+        });
         baseAmount = baseFood.baseServingSizeG;
     }
     else if (brandedFoodItemId) {
@@ -101,15 +191,19 @@ router.post('/log', auth_1.requireAuth, async (req, res) => {
         baseAmount = baseFood.servingSizeG;
     }
     else if (customFoodId) {
-        baseFood = await prisma_1.prisma.customFood.findUnique({ where: { id: Number(customFoodId) } });
+        baseFood = await prisma_1.prisma.customFood.findUnique({
+            where: { id: Number(customFoodId) },
+        });
         baseAmount = baseFood.baseServingSizeAmount;
     }
     else if (recipeId) {
-        baseFood = await prisma_1.prisma.recipe.findUnique({ where: { id: Number(recipeId) } });
+        baseFood = await prisma_1.prisma.recipe.findUnique({
+            where: { id: Number(recipeId) },
+        });
         baseAmount = 1; // per serving
     }
     const qty = Number(quantity || 1);
-    const u = unit || 'G';
+    const u = unit || "G";
     const scaled = (0, nutritionService_1.scaleNutrition)({
         calories: baseFood.calories,
         protein: baseFood.protein,
@@ -139,26 +233,26 @@ router.post('/log', auth_1.requireAuth, async (req, res) => {
             sodium: scaled.sodium,
         },
     });
-    res.redirect('/nutrition/daily');
+    res.redirect("/nutrition/daily");
 });
 /* Water logging (quick buttons) */
-router.post('/water', auth_1.requireAuth, async (req, res) => {
+router.post("/water", auth_1.requireAuth, async (req, res) => {
     const { amount, unit } = req.body;
     await prisma_1.prisma.waterLog.create({
         data: {
             userId: req.currentUser.id,
             amount: Number(amount),
-            unit: unit || 'ML',
+            unit: unit || "ML",
             dateTime: new Date(),
         },
     });
-    if (req.headers.accept?.includes('application/json')) {
+    if (req.headers.accept?.includes("application/json")) {
         return res.json({ success: true });
     }
-    res.redirect('/dashboard');
+    res.redirect("/dashboard");
 });
 /* Exercise logging (manual) */
-router.post('/exercise', auth_1.requireAuth, async (req, res) => {
+router.post("/exercise", auth_1.requireAuth, async (req, res) => {
     const { exerciseType, durationMin, caloriesBurned } = req.body;
     await prisma_1.prisma.exerciseLog.create({
         data: {
@@ -167,13 +261,13 @@ router.post('/exercise', auth_1.requireAuth, async (req, res) => {
             durationMin: Number(durationMin),
             caloriesBurned: Number(caloriesBurned),
             dateTime: new Date(),
-            source: 'MANUAL',
+            source: "MANUAL",
         },
     });
-    res.redirect('/dashboard');
+    res.redirect("/dashboard");
 });
 /* Weight logging */
-router.post('/weight', auth_1.requireAuth, async (req, res) => {
+router.post("/weight", auth_1.requireAuth, async (req, res) => {
     const { weightKg, date } = req.body;
     await prisma_1.prisma.weightLog.create({
         data: {
@@ -182,21 +276,21 @@ router.post('/weight', auth_1.requireAuth, async (req, res) => {
             date: date ? new Date(date) : new Date(),
         },
     });
-    res.redirect('/nutrition/progress');
+    res.redirect("/nutrition/progress");
 });
 /* Calorie & weight trends for Chart.js */
-router.get('/api/trends', auth_1.requireAuth, async (req, res) => {
+router.get("/api/trends", auth_1.requireAuth, async (req, res) => {
     const userId = req.currentUser.id;
     const now = new Date();
     const from = new Date(now.getTime() - 29 * 86400000);
     const entriesRaw = await prisma_1.prisma.userFoodEntry.findMany({
         where: { userId, dateTime: { gte: from, lte: now } },
         select: { dateTime: true, calories: true },
-        orderBy: { dateTime: 'asc' },
+        orderBy: { dateTime: "asc" },
     });
     const byDay = {};
     for (const e of entriesRaw) {
-        const key = (0, date_fns_2.format)((0, date_fns_1.startOfDay)(e.dateTime), 'yyyy-MM-dd');
+        const key = (0, date_fns_1.format)((0, date_fns_1.startOfDay)(e.dateTime), "yyyy-MM-dd");
         byDay[key] = (byDay[key] ?? 0) + e.calories;
     }
     const entries = Object.entries(byDay).map(([date, calories]) => ({
@@ -205,7 +299,7 @@ router.get('/api/trends', auth_1.requireAuth, async (req, res) => {
     }));
     const weights = await prisma_1.prisma.weightLog.findMany({
         where: { userId, date: { gte: from, lte: now } },
-        orderBy: { date: 'asc' },
+        orderBy: { date: "asc" },
     });
     res.json({ entries, weights });
 });
