@@ -380,51 +380,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const fill = wrapper.querySelector('.habit-card-fill');
     if (!card || !fill) return;
 
-    // getProgressScore returns ~0..1 for most cases; clamp it
-    const ratio = Math.max(0, Math.min(1, getProgressScore(wrapper)));
-    const target = ratio; // 0..1
-
-    // Start empty
+    // Start empty on load (no animation)
+    fill.style.transitionDuration = '0s';
     fill.style.transform = 'scaleX(0)';
+    void fill.offsetWidth; // flush
 
-    let done = false;
     let started = false;
+    let settled = false;
 
-    fill.addEventListener('transitionend', () => {
-      done = true;
-    });
+    const getTarget = () => {
+      const ratio = Math.max(0, Math.min(1, getProgressScore(wrapper)));
+      return ratio;
+    };
 
     function fillToTarget(durationSeconds) {
-      if (done) return;
+      if (settled) return;
+
+      const target = getTarget();
+
+      // If target is 0, we can consider it "done" immediately (it should remain empty)
+      if (target === 0) {
+        fill.style.transitionDuration = '0s';
+        fill.style.transform = 'scaleX(0)';
+        settled = true;
+        return;
+      }
+
       fill.style.transitionDuration = durationSeconds + 's';
-      // Force layout so duration change is applied before transform
-      void fill.offsetWidth;
+      void fill.offsetWidth; // ensure duration is applied before transform
       fill.style.transform = `scaleX(${target})`;
     }
 
+    function onEnd(e) {
+      if (e.propertyName !== 'transform') return;
+      settled = true;
+      fill.removeEventListener('transitionend', onEnd);
+    }
+
+    fill.addEventListener('transitionend', onEnd);
+
     card.addEventListener('mouseenter', () => {
-      if (done) return;
+      if (settled) return;
       started = true;
-      // Nice slow fill
       fillToTarget(0.7);
     });
 
     card.addEventListener('mouseleave', () => {
-      // If user leaves early, speed up and finish
-      if (!started || done) return;
-      fillToTarget(0.15);
+      // If user leaves early, speed-finish to the correct completion level
+      if (!started || settled) return;
+      fillToTarget(0.08);
     });
 
-    // Touch devices – treat first tap as hover
+    // Touch devices: treat first tap like hover
     card.addEventListener(
       'touchstart',
       () => {
-        if (done) return;
+        if (settled) return;
         started = true;
         fillToTarget(0.7);
       },
       { passive: true }
     );
   });
-
 });

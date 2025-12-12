@@ -256,3 +256,52 @@ body.habit-edit-mode .habit-card-content {
   position: relative;
   z-index: 1;
 }
+
+/* ================================ */
+/* Habit edit mode action reveal    */
+/* ================================ */
+
+/* Collapsed by default so controls occupy the far-right "action spot" */
+.habit-actions {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateX(6px);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: max-width 260ms ease, opacity 180ms ease, transform 260ms ease;
+}
+
+/* Expanded in edit mode; pushes .habit-controls left in a satisfying way */
+body.habit-edit-mode .habit-actions {
+  max-width: 10rem; /* enough for Edit + Delete */
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.habit-card-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.14),
+    rgba(14, 165, 233, 0.18),
+    rgba(56, 189, 248, 0.14)
+  );
+  background-size: 200% 100%;
+  animation: habitWaterWave 3s ease-in-out infinite;
+
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
+  transition: transform 0.7s ease-out;
+  z-index: 0;
+}
+
+@keyframes habitWaterWave {
+  0% { background-position: 0% 0; }
+  50% { background-position: 100% 0; }
+  100% { background-position: 0% 0; }
+}
