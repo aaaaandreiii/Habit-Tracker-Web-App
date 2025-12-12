@@ -28,19 +28,19 @@
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
         <div>
           <p class="text-slate-500">Goal</p>
-          <p class="text-lg font-semibold">{{nutrition.goal}}</p>
+          <p class="text-lg font-semibold">{{fmt2 nutrition.goal}}</p>
         </div>
         <div>
           <p class="text-slate-500">Eaten</p>
-          <p class="text-lg font-semibold">{{nutrition.caloriesEaten}}</p>
+          <p class="text-lg font-semibold">{{fmt2 nutrition.caloriesEaten}}</p>
         </div>
         <div>
           <p class="text-slate-500">Burned</p>
-          <p class="text-lg font-semibold text-emerald-500">+{{nutrition.caloriesBurned}}</p>
+          <p class="text-lg font-semibold text-emerald-500">+{{fmt2 nutrition.caloriesBurned}}</p>
         </div>
         <div>
           <p class="text-slate-500">Remaining</p>
-          <p class="text-lg font-semibold">{{nutrition.remaining}}</p>
+          <p class="text-lg font-semibold">{{fmt2 nutrition.remaining}}</p>
         </div>
       </div>
 
@@ -86,7 +86,7 @@
       <div class="bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 p-4 text-xs">
         <p class="text-slate-500 mb-1">Weight</p>
         {{#if weightLatest}}
-          <p class="text-lg font-semibold mb-2">{{weightLatest.weightKg}} kg</p>
+          <p class="text-lg font-semibold mb-2">{{fmt2 weightLatest.weightKg}} kg</p>
         {{else}}
           <p class="text-xs text-slate-500 mb-2">No weight logged yet</p>
         {{/if}}
@@ -102,13 +102,13 @@
         <p class="text-slate-500 mb-1">Macros</p>
         <div class="space-y-1 mt-2">
           <div class="flex justify-between">
-            <span>Protein</span><span>{{nutrition.protein}} g</span>
+            <span>Protein</span><span>{{fmt2 nutrition.protein}} g</span>
           </div>
           <div class="flex justify-between">
-            <span>Carbs</span><span>{{nutrition.carbs}} g</span>
+            <span>Carbs</span><span>{{fmt2 nutrition.carbs}} g</span>
           </div>
           <div class="flex justify-between">
-            <span>Fat</span><span>{{nutrition.fat}} g</span>
+            <span>Fat</span><span>{{fmt2 nutrition.fat}} g</span>
           </div>
         </div>
         <a href="/nutrition/daily" class="mt-2 inline-block text-emerald-500 text-[11px] hover:underline">
