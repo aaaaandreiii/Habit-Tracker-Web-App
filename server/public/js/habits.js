@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cat !== lastCat) {
           const header = document.createElement('div');
           header.className =
-            'habit-category-header col-span-full text-[11px] text-slate-500 mt-2 mb-1';
+            'habit-category-header col-span-full text-[11px] text-slate-500 dark:text-slate-400 mt-2 mb-1';
           header.textContent = cat;
           listContainer.appendChild(header);
           lastCat = cat;
