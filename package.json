@@ -9,7 +9,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "format": "prettier --write \"server/src/**/*.{js,jsx,ts,tsx,css,scss,html,json,md}\""
+    "format": "prettier --write \"server/src/**/*.{js,jsx,ts,tsx,css,scss,html,json,md}\" && npm audit --audit-level=critical && npm audit fix"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
