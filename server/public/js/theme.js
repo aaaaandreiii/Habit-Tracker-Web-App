@@ -1,40 +1,29 @@
-// server/public/js/theme.js
 (function () {
   const root = document.documentElement;
   const btn = document.getElementById('theme-toggle');
-  const stored = localStorage.getItem('theme');
+
+  function setBtnLabel(isDark) {
+    if (!btn) return;
+    btn.textContent = isDark ? '🌙 Dark' : '☀️ Light';
+  }
 
   function applyTheme(theme) {
     const isDark = theme === 'dark';
-
-    // Tailwind dark mode
     root.classList.toggle('dark', isDark);
-
-    // For any libs that look at data-theme
     root.setAttribute('data-theme', theme);
-
-    // Tell the browser how to render form controls, scrollbars, etc.
     root.style.colorScheme = isDark ? 'dark' : 'light';
-
-    if (btn) {
-      btn.textContent = isDark ? '🌙 Dark' : '☀️ Light';
-    }
-
     localStorage.setItem('theme', theme);
+    setBtnLabel(isDark);
   }
 
-  // Ignore OS preference; default to dark if nothing stored
-  const initial =
-    stored === 'dark' || stored === 'light'
-      ? stored
-      : 'dark';
-
-  applyTheme(initial);
+  // Respect what was already applied in <head> (no flash, consistent)
+  const initial = root.classList.contains('dark') ? 'dark' : 'light';
+  setBtnLabel(initial === 'dark');
 
   if (btn) {
     btn.addEventListener('click', () => {
-      const currentlyDark = root.classList.contains('dark');
-      applyTheme(currentlyDark ? 'light' : 'dark');
+      const next = root.classList.contains('dark') ? 'light' : 'dark';
+      applyTheme(next);
     });
   }
 })();

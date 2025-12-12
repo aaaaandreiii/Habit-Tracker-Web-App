@@ -1,17 +1,39 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full dark" data-theme="dark">
+<html lang="en" class="h-full" data-theme="light">
 <head>
   <meta charset="utf-8">
   <title>{{#if title}}{{title}} · {{/if}}Habit & Nutrition Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Tailwind CDN (for demo) -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        var theme =
+          stored === 'dark' || stored === 'light'
+            ? stored
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+              ? 'dark'
+              : 'light';
+
+        var root = document.documentElement;
+        root.classList.toggle('dark', theme === 'dark');
+        root.setAttribute('data-theme', theme);
+        root.style.colorScheme = theme === 'dark' ? 'dark' : 'light';
+
+        // Persist the first decision so it does NOT “reset” next time
+        if (!stored) localStorage.setItem('theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+
+
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
     };
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
 
 
   <!-- Custom CSS -->
