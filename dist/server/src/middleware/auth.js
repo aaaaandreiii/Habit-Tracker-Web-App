@@ -7,7 +7,7 @@ exports.attachUser = attachUser;
 exports.requireAuth = requireAuth;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_1 = require("../lib/prisma");
-const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 async function attachUser(req, _res, next) {
     const token = req.cookies?.token;
     if (!token) {
@@ -29,7 +29,7 @@ async function attachUser(req, _res, next) {
 }
 function requireAuth(req, res, next) {
     if (!req.currentUser) {
-        return res.redirect('/auth/login');
+        return res.redirect("/auth/login");
     }
     next();
 }

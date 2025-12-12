@@ -4,16 +4,18 @@ const express_1 = require("express");
 const auth_1 = require("../middleware/auth");
 const prisma_1 = require("../lib/prisma");
 const router = (0, express_1.Router)();
-router.get('/settings', auth_1.requireAuth, async (req, res) => {
-    const user = await prisma_1.prisma.user.findUnique({ where: { id: req.currentUser.id } });
-    res.render('profile-settings', {
-        layout: 'main',
-        title: 'Profile & Goals',
+router.get("/settings", auth_1.requireAuth, async (req, res) => {
+    const user = await prisma_1.prisma.user.findUnique({
+        where: { id: req.currentUser.id },
+    });
+    res.render("profile-settings", {
+        layout: "main",
+        title: "Profile & Goals",
         user: req.currentUser,
         profile: user,
     });
 });
-router.post('/settings', auth_1.requireAuth, async (req, res) => {
+router.post("/settings", auth_1.requireAuth, async (req, res) => {
     const { name, age, heightCm, weightKg, gender, activityLevel, goalType, calorieGoal, proteinGoalG, carbsGoalG, fatGoalG, waterGoalMl, unitsMetric, } = req.body;
     await prisma_1.prisma.user.update({
         where: { id: req.currentUser.id },
@@ -30,9 +32,9 @@ router.post('/settings', auth_1.requireAuth, async (req, res) => {
             carbsGoalG: carbsGoalG ? Number(carbsGoalG) : null,
             fatGoalG: fatGoalG ? Number(fatGoalG) : null,
             waterGoalMl: waterGoalMl ? Number(waterGoalMl) : null,
-            unitsMetric: unitsMetric === 'on',
+            unitsMetric: unitsMetric === "on",
         },
     });
-    res.redirect('/profile/settings');
+    res.redirect("/profile/settings");
 });
 exports.default = router;
